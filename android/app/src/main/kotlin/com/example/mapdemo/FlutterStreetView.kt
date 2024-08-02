@@ -47,9 +47,6 @@ internal class FlutterStreetView(
         streetViewPanoramaView = StreetViewPanoramaView(context, initOptions).apply {
             this.id = id
             getStreetViewPanoramaAsync {
-                if(it.panoramaCamera == null){
-
-                }
                 streetViewPanorama = it
                 setupListener(it)
             }
