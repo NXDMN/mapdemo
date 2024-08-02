@@ -70,7 +70,12 @@ class _FlutterStreetViewState extends State<FlutterStreetView> {
           viewType: viewType,
         );
       case TargetPlatform.iOS:
-        return const UiKitView(viewType: viewType);
+        return UiKitView(
+          viewType: viewType,
+          layoutDirection: TextDirection.ltr,
+          creationParams: creationParams,
+          creationParamsCodec: const StandardMessageCodec(),
+        );
       default:
         return Text('$defaultTargetPlatform is not yet supported.');
     }

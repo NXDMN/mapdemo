@@ -8,8 +8,15 @@ import GoogleMaps
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
-    GMSServices.provideAPIKey("API_KEY")
-    GeneratedPluginRegistrant.register(with: self)
-    return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+      GMSServices.provideAPIKey("API_KEY")
+      
+      GeneratedPluginRegistrant.register(with: self)
+      guard let pluginRegistrar = self.registrar(forPlugin: "plugin-name") else { return false }
+      let factory = FlutterStreetViewFactory(messenger: pluginRegistrar.messenger())
+      pluginRegistrar.register(
+          factory,
+          withId: "flutter-street-view")
+      
+      return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 }
