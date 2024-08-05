@@ -4,10 +4,10 @@ PODS:
     - Flutter
   - geolocator_apple (1.2.0):
     - Flutter
-  - GoogleMaps (8.4.0):
-    - GoogleMaps/Maps (= 8.4.0)
-  - GoogleMaps/Base (8.4.0)
-  - GoogleMaps/Maps (8.4.0):
+  - GoogleMaps (9.0.0):
+    - GoogleMaps/Maps (= 9.0.0)
+  - GoogleMaps/Base (9.0.0)
+  - GoogleMaps/Maps (9.0.0):
     - GoogleMaps/Base
   - sensors_plus (0.0.1):
     - Flutter
@@ -16,7 +16,7 @@ DEPENDENCIES:
   - Flutter (from `Flutter`)
   - flutter_compass (from `.symlinks/plugins/flutter_compass/ios`)
   - geolocator_apple (from `.symlinks/plugins/geolocator_apple/ios`)
-  - GoogleMaps (= 8.4.0)
+  - GoogleMaps (= 9.0.0)
   - sensors_plus (from `.symlinks/plugins/sensors_plus/ios`)
 
 SPEC REPOS:
@@ -37,9 +37,9 @@ SPEC CHECKSUMS:
   Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
   flutter_compass: cbbd285cea1584c7ac9c4e0c3e1f17cbea55e855
   geolocator_apple: 6cbaf322953988e009e5ecb481f07efece75c450
-  GoogleMaps: 8939898920281c649150e0af74aa291c60f2e77d
+  GoogleMaps: 4907d0d42bf8cd58f56743e31f91d23c10682745
   sensors_plus: 18a9b346c43e157da17d2c8e99def703f9efb9d8
 
-PODFILE CHECKSUM: e994aac4a7afecc84bb71a6ca65c8e3e496ee67c
+PODFILE CHECKSUM: 7f8ddca816c38e340896bd298c1c270454a81d78
 
 COCOAPODS: 1.15.2
