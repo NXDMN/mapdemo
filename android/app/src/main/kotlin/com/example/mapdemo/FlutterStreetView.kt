@@ -1,10 +1,8 @@
 package com.example.mapdemo
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Bundle
 import android.view.View
-import androidx.annotation.Nullable
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
@@ -21,8 +19,6 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.platform.PlatformView
-import zyz.flutter.plugin.flutter_google_street_view.Convert.toDouble
-import java.util.stream.Collectors.toList
 
 internal class FlutterStreetView(
     context: Context,
@@ -63,7 +59,7 @@ internal class FlutterStreetView(
             if (creationParams.containsKey("initPosition") && creationParams["initPosition"] != null) {
                 val data = creationParams["initPosition"] as List<*>
                 val initPosition = if (data.size == 2)
-                    LatLng(toDouble(data[0]!!), toDouble(data[1]!!))
+                    LatLng((data[0]!! as Double), (data[1]!! as Double))
                 else null
 
                 position(initPosition)
