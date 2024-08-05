@@ -2,15 +2,12 @@ PODS:
   - Flutter (1.0.0)
   - flutter_compass (0.0.1):
     - Flutter
-  - flutter_google_street_view (1.0.0):
-    - Flutter
-    - GoogleMaps
   - geolocator_apple (1.2.0):
     - Flutter
-  - GoogleMaps (6.2.1):
-    - GoogleMaps/Maps (= 6.2.1)
-  - GoogleMaps/Base (6.2.1)
-  - GoogleMaps/Maps (6.2.1):
+  - GoogleMaps (8.4.0):
+    - GoogleMaps/Maps (= 8.4.0)
+  - GoogleMaps/Base (8.4.0)
+  - GoogleMaps/Maps (8.4.0):
     - GoogleMaps/Base
   - sensors_plus (0.0.1):
     - Flutter
@@ -18,8 +15,8 @@ PODS:
 DEPENDENCIES:
   - Flutter (from `Flutter`)
   - flutter_compass (from `.symlinks/plugins/flutter_compass/ios`)
-  - flutter_google_street_view (from `.symlinks/plugins/flutter_google_street_view/ios`)
   - geolocator_apple (from `.symlinks/plugins/geolocator_apple/ios`)
+  - GoogleMaps (= 8.4.0)
   - sensors_plus (from `.symlinks/plugins/sensors_plus/ios`)
 
 SPEC REPOS:
@@ -31,8 +28,6 @@ EXTERNAL SOURCES:
     :path: Flutter
   flutter_compass:
     :path: ".symlinks/plugins/flutter_compass/ios"
-  flutter_google_street_view:
-    :path: ".symlinks/plugins/flutter_google_street_view/ios"
   geolocator_apple:
     :path: ".symlinks/plugins/geolocator_apple/ios"
   sensors_plus:
@@ -41,11 +36,10 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
   flutter_compass: cbbd285cea1584c7ac9c4e0c3e1f17cbea55e855
-  flutter_google_street_view: 40cf05d8d407185e922550f15ab8ad2218c174c6
   geolocator_apple: 6cbaf322953988e009e5ecb481f07efece75c450
-  GoogleMaps: 20d7b12be49a14287f797e88e0e31bc4156aaeb4
+  GoogleMaps: 8939898920281c649150e0af74aa291c60f2e77d
   sensors_plus: 18a9b346c43e157da17d2c8e99def703f9efb9d8
 
-PODFILE CHECKSUM: 819463e6a0290f5a72f145ba7cde16e8b6ef0796
+PODFILE CHECKSUM: e994aac4a7afecc84bb71a6ca65c8e3e496ee67c
 
 COCOAPODS: 1.15.2
