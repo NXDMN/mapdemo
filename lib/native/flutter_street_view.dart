@@ -72,7 +72,7 @@ class _FlutterStreetViewState extends State<FlutterStreetView> {
       case TargetPlatform.iOS:
         return UiKitView(
           viewType: viewType,
-          layoutDirection: TextDirection.ltr,
+          onPlatformViewCreated: onPlatformViewCreated,
           creationParams: creationParams,
           creationParamsCodec: const StandardMessageCodec(),
         );

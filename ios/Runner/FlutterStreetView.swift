@@ -7,33 +7,153 @@
 
 import Flutter
 import UIKit
+import GoogleMaps
 
-class FlutterStreetView: NSObject, FlutterPlatformView{
-    private var _view: UIView
+class FlutterStreetView: NSObject, FlutterPlatformView, GMSPanoramaViewDelegate, UIGestureRecognizerDelegate{
+    private var streetViewPanorama: GMSPanoramaView
+    private var initOptions: NSDictionary?
+    private var methodChannel: FlutterMethodChannel
+    private var gestureDetector: UILongPressGestureRecognizer?
+
+    func view() -> UIView {
+        return streetViewPanorama
+    }
 
     init(
         frame: CGRect,
         viewIdentifier viewId: Int64,
         arguments args: Any?,
-        binaryMessenger messenger: FlutterBinaryMessenger?
+        binaryMessenger messenger: FlutterBinaryMessenger
     ) {
-        _view = UIView()
+        streetViewPanorama = GMSPanoramaView(frame: .zero)
+        
+        methodChannel = FlutterMethodChannel(name: "flutter_street_view_\(viewId)", binaryMessenger: messenger)
+        
         super.init()
-        // iOS views can be created here
-        createNativeView(view: _view)
+        methodChannel.setMethodCallHandler(handle)
+        initOptions = args as? NSDictionary
+        updateInitOptions(args: initOptions)
+        setupListener()
     }
-
-    func view() -> UIView {
-        return _view
+    
+    private func updateInitOptions(args: NSDictionary?){
+        if(args == nil) {
+            return;
+        }
+        
+        let param = args! as NSDictionary
+        
+        if(param["initPosition"] != nil) {
+            let tmp = param["initPosition"]
+            var pos:CLLocationCoordinate2D? = nil
+            
+            if(tmp is NSArray) {
+                let pos_ = tmp as! [Double]
+                pos = CLLocationCoordinate2D(latitude: pos_[0], longitude: pos_[1])
+            }
+            
+            if(pos != nil) {
+                streetViewPanorama.moveNearCoordinate(pos!)
+            }
+        }
     }
-
-    func createNativeView(view _view: UIView){
-        _view.backgroundColor = UIColor.blue
-        let nativeLabel = UILabel()
-        nativeLabel.text = "Native text from iOS"
-        nativeLabel.textColor = UIColor.white
-        nativeLabel.textAlignment = .center
-        nativeLabel.frame = CGRect(x: 0, y: 0, width: 180, height: 48.0)
-        _view.addSubview(nativeLabel)
+    
+    func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult){
+        
+    }
+    
+    private func setupListener(){
+        streetViewPanorama.delegate = self
+        gestureDetector = UILongPressGestureRecognizer(target: self, action: #selector(onStreetViewPanoramaLongClick))
+        streetViewPanorama.addGestureRecognizer(gestureDetector!)
+    }
+    
+    //-----Events-----
+    //https://developers.google.com/maps/documentation/ios-sdk/reference/protocol_g_m_s_panorama_view_delegate-p
+    
+    func panoramaView(_ view: GMSPanoramaView, willMoveToPanoramaID panoramaID: String){}
+    
+    func panoramaView(_ view: GMSPanoramaView, didMoveTo panorama: GMSPanorama?){
+        onStreetViewPanoramaChange(panorama: panorama)
+    }
+    
+    func panoramaView(_ view: GMSPanoramaView, didMoveTo panorama: GMSPanorama, nearCoordinate coordinate: CLLocationCoordinate2D) {
+        onStreetViewPanoramaChange(panorama: panorama)
+    }
+    
+    func panoramaView(_ view: GMSPanoramaView, error: any Error, onMoveNearCoordinate coordinate: CLLocationCoordinate2D) {
+        onStreetViewPanoramaChange(panorama: view.panorama, error: error)
+    }
+    
+    func panoramaView(_ view: GMSPanoramaView, error: any Error, onMoveToPanoramaID panoramaID: String) {
+        onStreetViewPanoramaChange(panorama: view.panorama, error: error)
+    }
+    
+    func panoramaView(_ panoramaView: GMSPanoramaView, didMove camera: GMSPanoramaCamera) {
+        onStreetViewPanoramaCameraChange(camera)
+    }
+    
+    func panoramaView(_ panoramaView: GMSPanoramaView, didTap point: CGPoint) {
+        onStreetViewPanoramaClick(point)
+    }
+    
+    func panoramaView(_ panoramaView: GMSPanoramaView, didTap marker: GMSMarker) -> Bool {return true}
+    
+    func panoramaViewDidStartRendering(_ panoramaView: GMSPanoramaView) {}
+    
+    func panoramaViewDidFinishRendering(_ panoramaView: GMSPanoramaView) {}
+    
+    func onStreetViewPanoramaChange(panorama: GMSPanorama?, error: Error? = nil) {
+        let args: NSMutableDictionary = [:]
+        
+        if(panorama != nil) {
+            var links: [NSArray] = []
+            panorama!.links.forEach { link in
+                links.append([link.panoramaID, link.heading])
+            }
+            args["links"] = links
+            args["panoId"] = panorama!.panoramaID
+            args["position"] = [panorama!.coordinate.latitude, panorama!.coordinate.longitude]
+        }
+        
+        if(error != nil) {
+            args["error"] = "No valid panorama found."
+        }
+        
+        methodChannel.invokeMethod("panorama#onChange", arguments: args)
+    }
+    
+    func onStreetViewPanoramaCameraChange(_ camera: GMSPanoramaCamera) {
+        let args: NSDictionary = ["bearing": camera.orientation.heading,
+                                  "tilt" : camera.orientation.pitch,
+                                  "zoom": camera.zoom,
+                                  "fov": camera.fov]
+        
+        methodChannel.invokeMethod("camera#onChange", arguments: args)
+    }
+    
+    func onStreetViewPanoramaClick(_  point: CGPoint) {
+        let orientation = streetViewPanorama.orientation(for: point)
+                
+        let args : NSDictionary = ["bearing": orientation.heading,
+                                   "tilt": orientation.pitch,
+                                   "x": Int(point.x),
+                                   "y": Int(point.y)]
+        
+        methodChannel.invokeMethod("panorama#onClick", arguments: args)
+    }
+    
+    @objc func onStreetViewPanoramaLongClick(_ recognizer:UITapGestureRecognizer) {
+        if (recognizer.state == .began) {
+            let point = recognizer.location(in:streetViewPanorama)
+            let orientation = streetViewPanorama.orientation(for: point)
+            
+            let args : NSDictionary = ["bearing": orientation.heading, 
+                                       "tilt": orientation.pitch,
+                                       "x": Int(point.x),
+                                       "y": Int(point.y)]
+            
+            methodChannel.invokeMethod("panorama#onLongClick", arguments: args)
+        }
     }
 }
