@@ -10,6 +10,8 @@ import 'package:latlong2/latlong.dart';
 import 'package:mapdemo/native/street_view_events.dart';
 import 'package:mapdemo/native/street_view_types.dart';
 
+// Reference: https://github.com/zyzdev/flutter_street_view
+
 class FlutterStreetView extends StatefulWidget {
   const FlutterStreetView(
     this.initPosition, {
