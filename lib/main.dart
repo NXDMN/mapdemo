@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:mapdemo/flutter_map_page.dart';
-import 'package:mapdemo/street_view.dart';
 
 void main() {
   runApp(const MyApp());
@@ -95,14 +94,6 @@ class _MyHomePageState extends State<MyHomePage> {
           // wireframe for each widget.
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            FilledButton(
-              onPressed: () => {
-                Navigator.of(context).push(MaterialPageRoute(
-                  builder: (_) => StreetViewPanoramaInitDemo(),
-                ))
-              },
-              child: const Text("streetview"),
-            ),
             FilledButton(
               onPressed: () => {
                 Navigator.of(context).push(MaterialPageRoute(
