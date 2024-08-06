@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter_compass/flutter_compass.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:sensors_plus/sensors_plus.dart';
 
 class LocationHelper {
   static Future<bool> checkPermission() async {
@@ -68,12 +67,4 @@ class LocationHelper {
   static Stream<CompassEvent>? getHeadingStream() {
     return FlutterCompass.events;
   }
-
-  // static Stream<GyroscopeEvent> getGyroscopeStream() {
-  //   return gyroscopeEventStream(samplingPeriod: SensorInterval.uiInterval);
-  // }
-
-  // static Stream<MagnetometerEvent> getMagnetometerStream() {
-  //   return magnetometerEventStream(samplingPeriod: SensorInterval.uiInterval);
-  // }
 }

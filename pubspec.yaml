@@ -38,13 +38,11 @@ dependencies:
   dio: ^5.5.0+1
 
   # for current location
-  geolocator: ^12.0.0
+  geolocator: ^13.0.0
   # for FlutterMap
   flutter_map: ^7.0.2
   # for LatLng used by FlutterMap
   latlong2: ^0.9.1
-  # for gyroscope / magnetometer
-  sensors_plus: ^6.0.0
   # for heading
   flutter_compass: ^0.8.0
 
