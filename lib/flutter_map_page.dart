@@ -218,7 +218,7 @@ class _FlutterMapPageState extends State<FlutterMapPage>
 
                     // Markers
                     MarkerLayer(
-                      rotate: false,
+                      rotate: true,
                       markers: markers.values.toList(),
                     ),
                     // Polygons
