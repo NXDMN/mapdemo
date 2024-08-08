@@ -10,6 +10,8 @@ import 'package:latlong2/latlong.dart';
 import 'package:mapdemo/extensions.dart';
 import 'package:mapdemo/location_helper.dart';
 
+// Reference: https://github.com/tlserver/flutter_map_location_marker/tree/main
+
 class CurrentLocationLayer extends StatefulWidget {
   const CurrentLocationLayer(
     this.initialCurrentPosition, {
@@ -26,10 +28,12 @@ class CurrentLocationLayer extends StatefulWidget {
 
 class _CurrentLocationLayerState extends State<CurrentLocationLayer>
     with TickerProviderStateMixin {
-  late AnimationController _headingAnimationcontroller;
-
+  StreamSubscription<CompassEvent>? _headingStreamSubscription;
+  AnimationController? _headingAnimationController;
   double? _currentHeading;
+
   late StreamSubscription<Position> _positionStreamSubscription;
+  AnimationController? _positionAnimationController;
   LatLng? _currentLatLng;
 
   @override
@@ -44,11 +48,7 @@ class _CurrentLocationLayerState extends State<CurrentLocationLayer>
     );
 
     subscribePositionStream();
-
-    _headingAnimationcontroller = AnimationController(
-        duration: const Duration(milliseconds: 100), vsync: this);
-
-    _headingAnimationcontroller.forward();
+    subscribeHeadingStream();
   }
 
   void subscribePositionStream() {
@@ -62,12 +62,15 @@ class _CurrentLocationLayerState extends State<CurrentLocationLayer>
             begin: _currentLatLng!.latitude, end: position.latitude);
         final lngTween = Tween<double>(
             begin: _currentLatLng!.longitude, end: position.longitude);
-        final controller = AnimationController(
-            duration: const Duration(milliseconds: 500), vsync: this);
-        final Animation<double> animation =
-            CurvedAnimation(parent: controller, curve: Curves.fastOutSlowIn);
 
-        controller.addListener(() {
+        _positionAnimationController?.dispose();
+        _positionAnimationController = AnimationController(
+            duration: const Duration(milliseconds: 500), vsync: this);
+
+        final Animation<double> animation = CurvedAnimation(
+            parent: _positionAnimationController!, curve: Curves.fastOutSlowIn);
+
+        _positionAnimationController!.addListener(() {
           setState(() {
             _currentLatLng = LatLng(
               latTween.evaluate(animation),
@@ -83,19 +86,14 @@ class _CurrentLocationLayerState extends State<CurrentLocationLayer>
         });
 
         animation.addStatusListener((status) {
-          if (status == AnimationStatus.completed) {
-            print("marker move end");
-            controller.dispose();
-          } else if (status == AnimationStatus.dismissed) {
-            controller.dispose();
-          } else if (status == AnimationStatus.forward) {
-            print("marker move start");
+          if (status == AnimationStatus.completed ||
+              status == AnimationStatus.dismissed) {
+            _positionAnimationController!.dispose();
+            _positionAnimationController = null;
           }
         });
 
-        controller.forward();
-
-        // print(_currentLatLng);
+        _positionAnimationController!.forward();
       },
       onError: (error) {
         setState(() {
@@ -103,6 +101,47 @@ class _CurrentLocationLayerState extends State<CurrentLocationLayer>
         });
       },
     );
+  }
+
+  void subscribeHeadingStream() {
+    _headingStreamSubscription =
+        LocationHelper.getHeadingStream()?.listen((event) {
+      // Convert to radian (Transform.rotate use radian)
+      final heading = event.heading! * (pi / 180.0);
+
+      final headingTween = HeadingRadianTween(
+        begin: (_currentHeading ?? heading),
+        end: (heading),
+      );
+
+      _headingAnimationController?.dispose();
+      _headingAnimationController = AnimationController(
+          duration: const Duration(milliseconds: 50), vsync: this);
+      final Animation<double> animation = CurvedAnimation(
+          parent: _headingAnimationController!, curve: Curves.easeInOut);
+
+      _headingAnimationController!.addListener(() {
+        setState(() {
+          _currentHeading = headingTween.evaluate(animation);
+          print("update:$_currentHeading");
+        });
+      });
+
+      animation.addStatusListener((status) {
+        if (status == AnimationStatus.completed ||
+            status == AnimationStatus.dismissed) {
+          _headingAnimationController!.dispose();
+          _headingAnimationController = null;
+        }
+      });
+
+      _headingAnimationController!.forward();
+      //print(_currentHeading);
+    }, onError: (error) {
+      setState(() {
+        _currentHeading = null;
+      });
+    });
   }
 
   @override
@@ -122,7 +161,11 @@ class _CurrentLocationLayerState extends State<CurrentLocationLayer>
   @override
   void dispose() {
     _positionStreamSubscription.cancel();
-    _headingAnimationcontroller.dispose();
+    _headingStreamSubscription?.cancel();
+    _positionAnimationController?.dispose();
+    _positionAnimationController = null;
+    _headingAnimationController?.dispose();
+    _headingAnimationController = null;
     super.dispose();
   }
 
@@ -130,7 +173,7 @@ class _CurrentLocationLayerState extends State<CurrentLocationLayer>
   Widget build(BuildContext context) {
     if (_currentLatLng == null) return const SizedBox.shrink();
 
-    print("build");
+    //print("build");
     return MarkerLayer(
       rotate: false,
       markers: [
@@ -161,40 +204,22 @@ class _CurrentLocationLayerState extends State<CurrentLocationLayer>
             ),
           ),
         ),
-        Marker(
-          width: 10,
-          height: 10,
-          point: _currentLatLng!,
-          child: StreamBuilder<CompassEvent>(
-            stream: LocationHelper.getHeadingStream(),
-            builder: (context, snapshot) {
-              if (snapshot.hasData) {
-                final tweenTurns = Tween<double>(
-                  begin: (_currentHeading ?? 0) / 360,
-                  end: (snapshot.data!.heading!) / 360,
-                );
-
-                _currentHeading = snapshot.data!.heading;
-                //print(_currentHeading);
-
-                // Note: For location marker of size 20x20 and heading marker of size 10x10,
-                // the ratio of rotation alignment to translate offset is approximately 1:5
-                return Transform.translate(
-                  offset: const Offset(0.0, -18.0),
-                  child: RotationTransition(
-                    alignment: const Alignment(0, 3.6),
-                    turns: tweenTurns.animate(_headingAnimationcontroller),
-                    child: CustomPaint(
-                      painter: ArrowPainter(),
-                    ),
-                  ),
-                );
-              }
-
-              return const SizedBox.shrink();
-            },
+        if (_currentHeading != null)
+          Marker(
+            width: 10,
+            height: 10,
+            point: _currentLatLng!,
+            child: Transform.translate(
+              offset: const Offset(0.0, -18.0),
+              child: Transform.rotate(
+                alignment: const Alignment(0, 3.6),
+                angle: _currentHeading!,
+                child: CustomPaint(
+                  painter: ArrowPainter(),
+                ),
+              ),
+            ),
           ),
-        ),
       ],
     );
   }
@@ -226,4 +251,42 @@ class ArrowPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) {
     return false;
   }
+}
+
+/// A linear interpolation between a beginning and ending value for radian
+/// value. This value turn for both clockwise or anti-clockwise according to the
+/// shorter direction.
+class HeadingRadianTween extends Tween<double> {
+  /// Creates a tween.
+  HeadingRadianTween({
+    required super.begin,
+    required super.end,
+  });
+
+  @override
+  double lerp(double t) {
+    return _circularLerp(begin!, end!, t, 2 * pi);
+  }
+
+  double _circularLerp(double begin, double end, double t, double oneCircle) {
+    final halfCircle = oneCircle / 2;
+    // ignore: parameter_assignments
+    begin = begin % oneCircle;
+    // ignore: parameter_assignments
+    end = end % oneCircle;
+
+    final compareResult = (end - begin).abs().compareTo(halfCircle);
+    final crossZero = compareResult == 1 ||
+        (compareResult == 0 && begin != end && begin >= halfCircle);
+    if (crossZero) {
+      double opposite(double value) => (value + halfCircle) % oneCircle;
+
+      return opposite(_doubleLerp(opposite(begin), opposite(end), t));
+    } else {
+      return _doubleLerp(begin, end, t);
+    }
+  }
+
+  double _doubleLerp(double begin, double end, double t) =>
+      begin + (end - begin) * t;
 }
