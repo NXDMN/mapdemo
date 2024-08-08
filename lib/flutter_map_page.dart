@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
@@ -10,6 +11,7 @@ import 'package:mapdemo/extensions.dart';
 import 'package:mapdemo/location_helper.dart';
 import 'package:mapdemo/one_map_search_results.dart';
 import 'package:mapdemo/street_view_page.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /*
 1. able to plot marker on the map
@@ -36,9 +38,6 @@ class _FlutterMapPageState extends State<FlutterMapPage>
   );
 
   final MapController _mapController = MapController();
-  bool showPolygons = false;
-  bool showPolylines = false;
-  bool showCircles = false;
 
   Position? _currentLocation;
   bool focusCurrentLocation = false;
@@ -221,98 +220,7 @@ class _FlutterMapPageState extends State<FlutterMapPage>
                       rotate: true,
                       markers: markers.values.toList(),
                     ),
-                    // Polygons
-                    if (showPolygons)
-                      PolygonLayer(
-                        polygons: [
-                          Polygon(
-                            points: [
-                              LatLng(1.325, 103.905),
-                              LatLng(1.345, 103.905),
-                              LatLng(1.345, 103.855),
-                              LatLng(1.325, 103.855),
-                            ],
-                            color: Colors.blue.withOpacity(0.5),
-                            borderStrokeWidth: 2,
-                            borderColor: Colors.blue,
-                          ),
-                        ],
-                      ),
 
-                    // Polygons
-                    if (showPolylines)
-                      PolylineLayer(
-                        polylines: [
-                          Polyline(
-                            points: [
-                              LatLng(1.3005161, 103.7844032),
-                              LatLng(1.3004098, 103.7844825),
-                              LatLng(1.2998453, 103.7850075),
-                              LatLng(1.2997711, 103.7851701),
-                              LatLng(1.2997611, 103.7853548),
-                              LatLng(1.2998092, 103.7855315),
-                              LatLng(1.2999035, 103.78566),
-                              LatLng(1.3005722, 103.7860762),
-                              LatLng(1.301237, 103.7865871),
-                              LatLng(1.3015098, 103.7867477),
-                              LatLng(1.3017394, 103.7868561),
-                              LatLng(1.3017624, 103.7868571),
-                              LatLng(1.301868, 103.7868902),
-                              LatLng(1.3026965, 103.7870746),
-                              LatLng(1.3031376, 103.7872491),
-                              LatLng(1.3034016, 103.7873882),
-                              LatLng(1.3034778, 103.7874344),
-                              LatLng(1.3039156, 103.7877986),
-                              LatLng(1.3040901, 103.7880094),
-                              LatLng(1.30449, 103.7886343),
-                              LatLng(1.3051121, 103.7895788),
-                              LatLng(1.305427, 103.7900045),
-                              LatLng(1.3059201, 103.7903625),
-                              LatLng(1.3061778, 103.7905221),
-                              LatLng(1.3064435, 103.7906536),
-                              LatLng(1.3069118, 103.7908976),
-                              LatLng(1.307847, 103.7912194),
-                              LatLng(1.30881, 103.7915379),
-                              LatLng(1.3090273, 103.7915519),
-                              LatLng(1.3092903, 103.7915162),
-                              LatLng(1.3107071, 103.7910769),
-                              LatLng(1.3108926, 103.7910706),
-                              LatLng(1.3112273, 103.7911472),
-                              LatLng(1.3113798, 103.7912337),
-                              LatLng(1.3121803, 103.7919791),
-                              LatLng(1.3134712, 103.7931795),
-                              LatLng(1.3123137, 103.7947289),
-                              LatLng(1.3121993, 103.7949502),
-                              LatLng(1.3121091, 103.7952034),
-                              LatLng(1.3120761, 103.7954578),
-                              LatLng(1.3120913, 103.7956995),
-                              LatLng(1.312151, 103.7959778),
-                              LatLng(1.3128751, 103.7973623),
-                              LatLng(1.3129828, 103.79821),
-                              LatLng(1.3128863, 103.7985389),
-                              LatLng(1.312743, 103.7988253),
-                              LatLng(1.3119794, 103.8001084),
-                              LatLng(1.3119005, 103.8004089),
-                              LatLng(1.3110833, 103.8031665),
-                            ],
-                            strokeWidth: 5,
-                            color: Colors.red.withOpacity(0.5),
-                          ),
-                        ],
-                      ),
-                    // Circles
-                    if (showCircles)
-                      CircleLayer(
-                        circles: [
-                          CircleMarker(
-                            point: LatLng(1.2868108, 103.8545349),
-                            radius: 1000,
-                            color: Colors.green.withOpacity(0.5),
-                            borderColor: Colors.black.withOpacity(0.5),
-                            useRadiusInMeter: true,
-                          ),
-                        ],
-                      ),
                     // Attribute (https://www.onemap.gov.sg/docs/maps/)
                     Align(
                       alignment: Alignment.bottomRight,
@@ -326,9 +234,48 @@ class _FlutterMapPageState extends State<FlutterMapPage>
                               width: 18,
                               height: 18,
                             ),
-                            const Text(
-                              'OneMap ©2023 contributors | Singapore Land Authority',
-                              style: TextStyle(fontSize: 10),
+                            RichText(
+                              text: TextSpan(
+                                style: const TextStyle(fontSize: 10),
+                                children: [
+                                  TextSpan(
+                                    text: " OneMap",
+                                    style: const TextStyle(
+                                      color: Colors.blue,
+                                    ),
+                                    recognizer: TapGestureRecognizer()
+                                      ..onTap = () async {
+                                        final url = Uri.parse(
+                                            'https://www.onemap.gov.sg/');
+                                        if (!await launchUrl(url)) {
+                                          throw Exception(
+                                              'Could not launch $url');
+                                        }
+                                      },
+                                  ),
+                                  const TextSpan(
+                                    text: ' © contributors | ',
+                                    style: TextStyle(
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                  TextSpan(
+                                    text: "Singapore Land Authority ",
+                                    style: const TextStyle(
+                                      color: Colors.blue,
+                                    ),
+                                    recognizer: TapGestureRecognizer()
+                                      ..onTap = () async {
+                                        final url = Uri.parse(
+                                            'https://www.sla.gov.sg/');
+                                        if (!await launchUrl(url)) {
+                                          throw Exception(
+                                              'Could not launch $url');
+                                        }
+                                      },
+                                  ),
+                                ],
+                              ),
                             ),
                           ],
                         ),
@@ -360,21 +307,6 @@ class _FlutterMapPageState extends State<FlutterMapPage>
                       ),
                       Row(
                         children: [
-                          FilledButton(
-                            onPressed: () =>
-                                setState(() => showPolygons = !showPolygons),
-                            child: const Text("Polygon"),
-                          ),
-                          FilledButton(
-                            onPressed: () =>
-                                setState(() => showPolylines = !showPolylines),
-                            child: const Text("Polyline"),
-                          ),
-                          FilledButton(
-                            onPressed: () =>
-                                setState(() => showCircles = !showCircles),
-                            child: const Text("Circle"),
-                          ),
                           IconButton.filled(
                             onPressed: () =>
                                 setState(() => focusCurrentLocation = true),

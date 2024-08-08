@@ -123,7 +123,6 @@ class _CurrentLocationLayerState extends State<CurrentLocationLayer>
       _headingAnimationController!.addListener(() {
         setState(() {
           _currentHeading = headingTween.evaluate(animation);
-          print("update:$_currentHeading");
         });
       });
 
