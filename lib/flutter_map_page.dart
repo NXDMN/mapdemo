@@ -7,6 +7,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:mapdemo/current_location_layer.dart';
 import 'package:mapdemo/extensions.dart';
 import 'package:mapdemo/location_helper.dart';
+import 'package:mapdemo/one_map_hdb_branch.dart';
 import 'package:mapdemo/one_map_search_results.dart';
 import 'package:mapdemo/street_view_page.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -45,19 +46,6 @@ class _FlutterMapPageState extends State<FlutterMapPage>
   // Markers START
   Map<String, Marker> markers = <String, Marker>{};
   int _markerIdCounter = 0;
-  final List<LatLng> latLngList = [
-    const LatLng(1.300535688799964, 103.85526531815529),
-    const LatLng(1.340535688799964, 103.81526531815529),
-    const LatLng(1.3414141175644319, 103.70247144252062),
-    const LatLng(1.342965014570922, 103.70189175009727),
-    const LatLng(1.439634488961546, 103.82100060582161),
-    const LatLng(1.376783841865973, 103.76657422631979),
-    const LatLng(1.3705803346710366, 103.85150905698538),
-    const LatLng(1.3482605813428485, 103.9541494846344),
-    const LatLng(1.3249689179499191, 103.9135492220521),
-    const LatLng(1.3568198071147146, 103.88276115059853),
-    const LatLng(1.3438505706221706, 103.75726092606783),
-  ];
 
   void _addMarker(LatLng l) {
     final String markerId = "$_markerIdCounter";
@@ -65,13 +53,11 @@ class _FlutterMapPageState extends State<FlutterMapPage>
       point: l,
       width: 50,
       height: 50,
-      child: IconButton(
-        iconSize: 50,
-        color: Colors.red,
-        icon: const Icon(Icons.location_pin),
-        onPressed: () {
-          _onMarkerTapped(markerId);
-        },
+      child: InkWell(
+        child: Image.network(
+          "https://www.onemap.gov.sg/images/theme/hdb_branches.jpg",
+        ),
+        onTap: () => _onMarkerTapped(markerId),
       ),
     );
 
@@ -122,10 +108,6 @@ class _FlutterMapPageState extends State<FlutterMapPage>
     super.initState();
 
     _getCurrentLocation();
-
-    for (var l in latLngList) {
-      _addMarker(l);
-    }
   }
 
   void _getCurrentLocation() async {
@@ -333,6 +315,12 @@ class _FlutterMapPageState extends State<FlutterMapPage>
                             onPressed: _onStreetViewPressed,
                             icon: const Icon(Icons.streetview),
                           ),
+                          FilledButton.icon(
+                            icon: Image.network(
+                                "https://www.onemap.gov.sg/images/theme/hdb_branches.jpg"),
+                            label: const Text("HDB Branches"),
+                            onPressed: _searchNearbyPlaces,
+                          ),
                         ],
                       ),
                     ],
@@ -359,13 +347,8 @@ class _FlutterMapPageState extends State<FlutterMapPage>
 
     if (latlngRegex.hasMatch(s)) {
       // is latlng
-      final l = s.split(',');
-      if (l.length == 2) {
-        final lat = double.tryParse(l[0]);
-        final lng = double.tryParse(l[1]);
-
-        if (lat != null && lng != null) {
-          LatLng latLng = LatLng(lat, lng);
+      LatLng? latLng = s.toLatLng();
+      if (latLng != null) {
           if (latLng.checkWithinBounds(sgBounds)) {
             _addMarkerAndMoveCamera(latLng);
           } else {
@@ -383,7 +366,6 @@ class _FlutterMapPageState extends State<FlutterMapPage>
               ),
             );
           }
-        }
       } else {
         showDialog(
           context: context,
@@ -509,6 +491,51 @@ class _FlutterMapPageState extends State<FlutterMapPage>
       isbusy = false;
     });
   }
-}
-//eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJiM2ViOTBhMzVhMTY2OWZiN2I1OTk4ZDM1Yzc4OGFjMiIsImlzcyI6Imh0dHA6Ly9pbnRlcm5hbC1hbGItb20tcHJkZXppdC1pdC0xMjIzNjk4OTkyLmFwLXNvdXRoZWFzdC0xLmVsYi5hbWF6b25hd3MuY29tL2FwaS92Mi91c2VyL3Bhc3N3b3JkIiwiaWF0IjoxNzIxMDIyMDc2LCJleHAiOjE3MjEyODEyNzYsIm5iZiI6MTcyMTAyMjA3NiwianRpIjoiZUFMSkZPU3JxMks0UG1PbyIsInVzZXJfaWQiOjQwNTYsImZvcmV2ZXIiOmZhbHNlfQ.MOLMUi9OwU-0iQTBryeURU83xpdm1Ckofx0nCeHC1dI
 
+  void _searchNearbyPlaces() async {
+    LatLngBounds visibleBounds = _mapController.camera.visibleBounds;
+
+    var response = await dio.get(
+      'https://www.onemap.gov.sg/api/public/themesvc/retrieveTheme',
+      queryParameters: {
+        'queryName': 'hdb_branches',
+        'extents':
+            '${visibleBounds.south},${visibleBounds.west},${visibleBounds.north},${visibleBounds.east}'
+      },
+      options: Options(headers: {
+        'Authorization': 'ONE_MAP_TOKEN',
+      }),
+    );
+    if (response.statusCode == 200) {
+      var json = response.data as Map<String, dynamic>;
+      var results = json['SrchResults'] as List;
+
+      if (!mounted) return;
+
+      if (((results[0]["FeatCount"] as int?) ?? 0) > 0) {
+        List<OneMapHdbBranch> hdbBranches = results
+            .sublist(1)
+            .map<OneMapHdbBranch>((r) => OneMapHdbBranch.fromJson(r))
+            .toList();
+
+        for (var branch in hdbBranches) {
+          if (branch.latlng != null) _addMarker(branch.latlng!);
+        }
+      } else {
+        showDialog(
+          context: context,
+          builder: (_) => AlertDialog(
+            title: const Text("Not found"),
+            content: const Text("No nearby HDB Branches around."),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text("OK"),
+              )
+            ],
+          ),
+        );
+      }
+    }
+  }
+}

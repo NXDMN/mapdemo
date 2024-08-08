@@ -12,6 +12,22 @@ extension LatLngExtension on LatLng {
   }
 }
 
+extension StringExtension on String? {
+  LatLng? toLatLng() {
+    if (this != null && this!.isNotEmpty) {
+      final l = this!.split(',');
+      if (l.length == 2) {
+        final lat = double.tryParse(l[0]);
+        final lng = double.tryParse(l[1]);
+
+        if (lat != null && lng != null) return LatLng(lat, lng);
+      }
+    }
+
+    return null;
+  }
+}
+
 // https://github.com/fleaflet/flutter_map/blob/master/example/lib/pages/animated_map_controller.dart
 extension MapControllerExtension on MapController {
   static const _startedId = 'AnimatedMapController#MoveStarted';
