@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:dio/dio.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -42,6 +40,8 @@ class _FlutterMapPageState extends State<FlutterMapPage>
   Position? _currentLocation;
   bool focusCurrentLocation = false;
 
+  LatLng? _currentLatLng;
+
   // Markers START
   Map<String, Marker> markers = <String, Marker>{};
   int _markerIdCounter = 0;
@@ -59,9 +59,8 @@ class _FlutterMapPageState extends State<FlutterMapPage>
     const LatLng(1.3438505706221706, 103.75726092606783),
   ];
 
-  static const current = "current";
-  void _addMarker(LatLng l, {bool temp = false}) {
-    final String markerId = temp ? current : "$_markerIdCounter";
+  void _addMarker(LatLng l) {
+    final String markerId = "$_markerIdCounter";
     final Marker marker = Marker(
       point: l,
       width: 50,
@@ -215,6 +214,24 @@ class _FlutterMapPageState extends State<FlutterMapPage>
                         focusCurrentLocation: focusCurrentLocation,
                       ),
 
+                    // CurrentMarker
+                    if (_currentLatLng != null)
+                      MarkerLayer(
+                        rotate: true,
+                        markers: [
+                          Marker(
+                            point: _currentLatLng!,
+                            width: 50,
+                            height: 50,
+                            child: const Icon(
+                              Icons.location_pin,
+                              size: 50,
+                              color: Colors.red,
+                            ),
+                          )
+                        ],
+                      ),
+
                     // Markers
                     MarkerLayer(
                       rotate: true,
@@ -327,7 +344,9 @@ class _FlutterMapPageState extends State<FlutterMapPage>
 
   void _addMarkerAndMoveCamera(LatLng latLng) {
     print(latLng);
-    _addMarker(latLng, temp: true);
+    setState(() {
+      _currentLatLng = latLng;
+    });
 
     //_mapController.move(latLng, 19);
     _mapController.animatedMove(this, latLng, 19);
@@ -385,7 +404,7 @@ class _FlutterMapPageState extends State<FlutterMapPage>
       var response = await dio.get(
           'https://www.onemap.gov.sg/api/common/elastic/search?searchVal=$s&returnGeom=Y&getAddrDetails=Y&pageNum=1');
       if (response.statusCode == 200) {
-        var json = jsonDecode(response.data) as Map<String, dynamic>;
+        var json = response.data as Map<String, dynamic>;
         OneMapSearchResults searchResults = OneMapSearchResults.fromJson(json);
         if (searchResults.found > 0) {
           AddressResult location = searchResults.results[0];
@@ -417,7 +436,7 @@ class _FlutterMapPageState extends State<FlutterMapPage>
     var response = await dio.get(
         'https://www.onemap.gov.sg/api/common/elastic/search?searchVal=$s&returnGeom=Y&getAddrDetails=Y&pageNum=1');
     if (response.statusCode == 200) {
-      var json = jsonDecode(response.data) as Map<String, dynamic>;
+      var json = response.data as Map<String, dynamic>;
       OneMapSearchResults searchResults = OneMapSearchResults.fromJson(json);
       if (searchResults.found > 0) {
         return List<ListTile>.generate(searchResults.results.length,
@@ -447,10 +466,9 @@ class _FlutterMapPageState extends State<FlutterMapPage>
     setState(() {
       isbusy = true;
     });
-    final marker = markers[current];
     LatLng latLng;
-    if (marker != null) {
-      latLng = marker.point;
+    if (_currentLatLng != null) {
+      latLng = _currentLatLng!;
     } else {
       Position? position = await LocationHelper.getCurrentPosition();
       if (position != null) {
