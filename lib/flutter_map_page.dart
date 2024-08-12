@@ -7,6 +7,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:mapdemo/current_location_layer.dart';
 import 'package:mapdemo/extensions.dart';
 import 'package:mapdemo/location_helper.dart';
+import 'package:mapdemo/nearby_places_layer.dart';
 import 'package:mapdemo/one_map_hdb_branch.dart';
 import 'package:mapdemo/one_map_search_results.dart';
 import 'package:mapdemo/street_view_page.dart';
@@ -43,64 +44,7 @@ class _FlutterMapPageState extends State<FlutterMapPage>
 
   LatLng? _currentLatLng;
 
-  // Markers START
-  Map<String, Marker> markers = <String, Marker>{};
-  int _markerIdCounter = 0;
-
-  void _addMarker(LatLng l) {
-    final String markerId = "$_markerIdCounter";
-    final Marker marker = Marker(
-      point: l,
-      width: 50,
-      height: 50,
-      child: InkWell(
-        child: Image.network(
-          "https://www.onemap.gov.sg/images/theme/hdb_branches.jpg",
-        ),
-        onTap: () => _onMarkerTapped(markerId),
-      ),
-    );
-
-    setState(() {
-      markers[markerId] = marker;
-    });
-
-    _markerIdCounter++;
-  }
-
-  void _onMarkerTapped(String id) {
-    final Marker? tappedMarker = markers[id];
-    if (tappedMarker != null) {
-      showModalBottomSheet(
-        context: context,
-        isDismissible: true,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(25),
-            topRight: Radius.circular(25),
-          ),
-        ),
-        builder: (_) => DraggableScrollableSheet(
-          expand: false,
-          builder: (BuildContext context, scrollController) =>
-              SingleChildScrollView(
-            controller: scrollController,
-            child: SizedBox(
-              width: MediaQuery.of(context).size.width,
-              child: Column(
-                children: [
-                  Text(id),
-                  Text("Latitue:${tappedMarker.point.latitude}"),
-                  Text("Longitude:${tappedMarker.point.longitude}"),
-                ],
-              ),
-            ),
-          ),
-        ),
-      );
-    }
-  }
-  // Markers END
+  List<OneMapHdbBranch> _hdbBranches = [];
 
   bool isbusy = false;
   @override
@@ -214,10 +158,11 @@ class _FlutterMapPageState extends State<FlutterMapPage>
                         ],
                       ),
 
-                    // Markers
-                    MarkerLayer(
-                      rotate: true,
-                      markers: markers.values.toList(),
+                    // NearbyPlaces Marker
+                    NearbyPlacesLayer(
+                      places: _hdbBranches,
+                      markerIcon: Image.network(
+                          "https://www.onemap.gov.sg/images/theme/hdb_branches.jpg"),
                     ),
 
                     // Attribute (https://www.onemap.gov.sg/docs/maps/)
@@ -317,7 +262,10 @@ class _FlutterMapPageState extends State<FlutterMapPage>
                           ),
                           FilledButton.icon(
                             icon: Image.network(
-                                "https://www.onemap.gov.sg/images/theme/hdb_branches.jpg"),
+                              "https://www.onemap.gov.sg/images/theme/hdb_branches.jpg",
+                              width: 50,
+                              height: 50,
+                            ),
                             label: const Text("HDB Branches"),
                             onPressed: _searchNearbyPlaces,
                           ),
@@ -518,9 +466,9 @@ class _FlutterMapPageState extends State<FlutterMapPage>
             .map<OneMapHdbBranch>((r) => OneMapHdbBranch.fromJson(r))
             .toList();
 
-        for (var branch in hdbBranches) {
-          if (branch.latlng != null) _addMarker(branch.latlng!);
-        }
+        setState(() {
+          _hdbBranches = hdbBranches;
+        });
       } else {
         showDialog(
           context: context,
