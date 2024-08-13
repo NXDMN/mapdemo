@@ -39,6 +39,9 @@ class _FlutterMapPageState extends State<FlutterMapPage>
     const LatLng(1.494, 104.122), //northeast
   );
 
+  final FocusNode _searchFocusNode = FocusNode();
+  final SearchController _searchController = SearchController();
+
   final MapController _mapController = MapController();
 
   Position? _currentLocation;
@@ -89,6 +92,14 @@ class _FlutterMapPageState extends State<FlutterMapPage>
   }
 
   @override
+  void dispose() {
+    _mapController.dispose();
+    _searchController.dispose();
+    _searchFocusNode.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -114,7 +125,7 @@ class _FlutterMapPageState extends State<FlutterMapPage>
                 final place = NearbyPlaces.values[index];
                 return MenuItemButton(
                   onPressed: () => _searchNearbyPlaces(place),
-                  leadingIcon: Image.network(place.icon, width: 20, height: 20),
+                  leadingIcon: Image.network(place.icon, width: 30, height: 30),
                   child: Text(place.name),
                 );
               },
@@ -152,8 +163,10 @@ class _FlutterMapPageState extends State<FlutterMapPage>
                   children: [
                     // Base map
                     TileLayer(
-                      tileUpdateTransformer: MapControllerExtension
-                          .animatedMoveTileUpdateTransformer,
+                      // This will cause target location not render after moved if use focusNode.unfocus
+                      // but we need unfocus search bar keyboard so comment this
+                      // tileUpdateTransformer: MapControllerExtension
+                      //     .animatedMoveTileUpdateTransformer,
                       urlTemplate:
                           "https://www.onemap.gov.sg/maps/tiles/Default_HD/{z}/{x}/{y}.png",
                       userAgentPackageName: "com.example.mapdemo",
@@ -260,19 +273,21 @@ class _FlutterMapPageState extends State<FlutterMapPage>
                   child: Column(
                     children: [
                       SearchAnchor(
+                        searchController: _searchController,
                         isFullScreen: false,
-                        viewOnSubmitted: (value) {
-                          _goToLatLng(value);
-                        },
+                        viewLeading: IconButton(
+                          icon: const Icon(Icons.arrow_back),
+                          onPressed: () {
+                            _searchController.closeView(null);
+                            _searchController.text = "";
+                            _searchFocusNode.unfocus();
+                          },
+                        ),
+                        viewOnSubmitted: _goToLatLng,
                         builder: (context, controller) => SearchBar(
                           controller: controller,
-                          onSubmitted: _goToLatLng,
-                          // onTap: () {
-                          //   controller.openView();
-                          // },
-                          onChanged: (_) {
-                            controller.openView();
-                          },
+                          focusNode: _searchFocusNode,
+                          onTap: () => controller.openView(),
                         ),
                         suggestionsBuilder: _generateSuggestion,
                       ),
@@ -304,7 +319,6 @@ class _FlutterMapPageState extends State<FlutterMapPage>
   }
 
   void _addMarkerAndMoveCamera(LatLng latLng) {
-    print(latLng);
     setState(() {
       _currentLatLng = latLng;
     });
@@ -316,7 +330,12 @@ class _FlutterMapPageState extends State<FlutterMapPage>
   final latlngRegex = RegExp(
       r'^[-+]?([1-8]?\d(\.\d+)?|90(\.0+)?),\s*[-+]?(180(\.0+)?|((1[0-7]\d)|([1-9]?\d))(\.\d+)?)$');
   void _goToLatLng(String s) async {
+    _searchController.closeView(s);
+    _searchFocusNode.unfocus();
+
     s = s.trim();
+
+    if (s.isEmpty) return;
 
     if (latlngRegex.hasMatch(s)) {
       // is latlng
@@ -357,7 +376,14 @@ class _FlutterMapPageState extends State<FlutterMapPage>
     } else {
       // not latlng
       var response = await dio.get(
-          'https://www.onemap.gov.sg/api/common/elastic/search?searchVal=$s&returnGeom=Y&getAddrDetails=Y&pageNum=1');
+        'https://www.onemap.gov.sg/api/common/elastic/search',
+        queryParameters: {
+          'searchVal': s,
+          'returnGeom': 'Y',
+          'getAddrDetails': 'Y',
+          'pageNum': 1,
+        },
+      );
       if (response.statusCode == 200) {
         var json = response.data as Map<String, dynamic>;
         OneMapSearchResults searchResults = OneMapSearchResults.fromJson(json);
@@ -388,8 +414,20 @@ class _FlutterMapPageState extends State<FlutterMapPage>
   Future<List<Widget>> _generateSuggestion(
       BuildContext context, SearchController controller) async {
     var s = controller.text.trim();
+
+    if (s.isEmpty) {
+      s = "a";
+    }
+
     var response = await dio.get(
-        'https://www.onemap.gov.sg/api/common/elastic/search?searchVal=$s&returnGeom=Y&getAddrDetails=Y&pageNum=1');
+      'https://www.onemap.gov.sg/api/common/elastic/search',
+      queryParameters: {
+        'searchVal': s,
+        'returnGeom': 'Y',
+        'getAddrDetails': 'Y',
+        'pageNum': 1,
+      },
+    );
     if (response.statusCode == 200) {
       var json = response.data as Map<String, dynamic>;
       OneMapSearchResults searchResults = OneMapSearchResults.fromJson(json);
@@ -401,9 +439,9 @@ class _FlutterMapPageState extends State<FlutterMapPage>
             title: Text(location.searchVal),
             subtitle: Text(location.address),
             onTap: () {
-              setState(() {
-                controller.closeView(s);
-              });
+              controller.closeView(null);
+              controller.text = "";
+              _searchFocusNode.unfocus();
               _addMarkerAndMoveCamera(LatLng(location.lat!, location.lng!));
             },
           );
