@@ -2,7 +2,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:mapdemo/one_map_hdb_branch.dart';
+import 'package:mapdemo/one_map_nearby_place.dart';
 
 class NearbyPlacesLayer extends StatefulWidget {
   const NearbyPlacesLayer({
@@ -11,7 +11,7 @@ class NearbyPlacesLayer extends StatefulWidget {
     required this.markerIcon,
   });
 
-  final List<OneMapHdbBranch> places;
+  final List<OneMapNearbyPlace> places;
   final Widget markerIcon;
 
   @override
@@ -92,7 +92,7 @@ class _NearbyPlacesLayerState extends State<NearbyPlacesLayer> {
                   child: InfoWindow(
                     title: place.name,
                     text:
-                        "${place.addressBlockHouseNumber}, ${place.addressStreetName}, #${place.addressFloorNumber}-${place.addressUnitNumber}, Singapore ${place.addressPostalCode}",
+                        "${place.addressBlockHouseNumber}, ${place.addressStreetName}, ${(place.addressFloorNumber != null && place.addressUnitNumber != null) ? "#${place.addressFloorNumber}-${place.addressUnitNumber}, " : ""}Singapore ${place.addressPostalCode}",
                   ),
                 ),
               InkWell(

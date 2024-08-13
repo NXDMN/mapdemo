@@ -8,7 +8,10 @@ import 'package:mapdemo/current_location_layer.dart';
 import 'package:mapdemo/extensions.dart';
 import 'package:mapdemo/location_helper.dart';
 import 'package:mapdemo/nearby_places_layer.dart';
+import 'package:mapdemo/one_map_community_club.dart';
 import 'package:mapdemo/one_map_hdb_branch.dart';
+import 'package:mapdemo/one_map_library.dart';
+import 'package:mapdemo/one_map_nearby_place.dart';
 import 'package:mapdemo/one_map_search_results.dart';
 import 'package:mapdemo/street_view_page.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -29,7 +32,6 @@ class FlutterMapPage extends StatefulWidget {
 
 class _FlutterMapPageState extends State<FlutterMapPage>
     with TickerProviderStateMixin {
-  bool showControls = false;
   final dio = Dio();
 
   final sgBounds = LatLngBounds(
@@ -44,7 +46,8 @@ class _FlutterMapPageState extends State<FlutterMapPage>
 
   LatLng? _currentLatLng;
 
-  List<OneMapHdbBranch> _hdbBranches = [];
+  NearbyPlaces? _selectedNearbyPlaces;
+  List<OneMapNearbyPlace> _nearbyPlaces = [];
 
   bool isbusy = false;
   @override
@@ -92,9 +95,31 @@ class _FlutterMapPageState extends State<FlutterMapPage>
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: const Text('Flutter Map'),
         actions: [
-          IconButton(
-              onPressed: () => setState(() => showControls = !showControls),
-              icon: Icon(showControls ? Icons.expand_less : Icons.expand_more))
+          MenuAnchor(
+            builder: (context, controller, child) {
+              return IconButton(
+                onPressed: () {
+                  if (controller.isOpen) {
+                    controller.close();
+                  } else {
+                    controller.open();
+                  }
+                },
+                icon: const Icon(Icons.layers_outlined),
+              );
+            },
+            menuChildren: List<MenuItemButton>.generate(
+              NearbyPlaces.values.length,
+              (int index) {
+                final place = NearbyPlaces.values[index];
+                return MenuItemButton(
+                  onPressed: () => _searchNearbyPlaces(place),
+                  leadingIcon: Image.network(place.icon, width: 20, height: 20),
+                  child: Text(place.name),
+                );
+              },
+            ),
+          ),
         ],
       ),
       body: isbusy
@@ -160,9 +185,10 @@ class _FlutterMapPageState extends State<FlutterMapPage>
 
                     // NearbyPlaces Marker
                     NearbyPlacesLayer(
-                      places: _hdbBranches,
-                      markerIcon: Image.network(
-                          "https://www.onemap.gov.sg/images/theme/hdb_branches.jpg"),
+                      places: _nearbyPlaces,
+                      markerIcon: _selectedNearbyPlaces != null
+                          ? Image.network(_selectedNearbyPlaces!.icon)
+                          : const SizedBox.shrink(),
                     ),
 
                     // Attribute (https://www.onemap.gov.sg/docs/maps/)
@@ -229,8 +255,9 @@ class _FlutterMapPageState extends State<FlutterMapPage>
                 ),
 
                 // Page control
-                if (showControls)
-                  Column(
+                Padding(
+                  padding: const EdgeInsets.all(10.0),
+                  child: Column(
                     children: [
                       SearchAnchor(
                         isFullScreen: false,
@@ -249,30 +276,28 @@ class _FlutterMapPageState extends State<FlutterMapPage>
                         ),
                         suggestionsBuilder: _generateSuggestion,
                       ),
-                      Row(
-                        children: [
-                          IconButton.filled(
-                            onPressed: () =>
-                                setState(() => focusCurrentLocation = true),
-                            icon: const Icon(Icons.my_location),
-                          ),
-                          IconButton.filled(
-                            onPressed: _onStreetViewPressed,
-                            icon: const Icon(Icons.streetview),
-                          ),
-                          FilledButton.icon(
-                            icon: Image.network(
-                              "https://www.onemap.gov.sg/images/theme/hdb_branches.jpg",
-                              width: 50,
-                              height: 50,
-                            ),
-                            label: const Text("HDB Branches"),
-                            onPressed: _searchNearbyPlaces,
-                          ),
-                        ],
-                      ),
                     ],
                   ),
+                ),
+              ],
+            ),
+      floatingActionButton: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          FloatingActionButton(
+            heroTag: "streetview",
+                            onPressed: _onStreetViewPressed,
+            shape: const CircleBorder(),
+            child: const Icon(Icons.streetview),
+                          ),
+          const SizedBox(height: 10),
+          FloatingActionButton(
+            heroTag: "currentlocation",
+            onPressed: () => setState(() => focusCurrentLocation = true),
+            shape: const CircleBorder(),
+            child: const Icon(Icons.my_location),
+                      ),
+          const SizedBox(height: 10),
               ],
             ),
     );
@@ -440,13 +465,19 @@ class _FlutterMapPageState extends State<FlutterMapPage>
     });
   }
 
-  void _searchNearbyPlaces() async {
+  void _searchNearbyPlaces(NearbyPlaces place) async {
+    final queryName = switch (place) {
+      NearbyPlaces.hdbBranches => 'hdb_branches',
+      NearbyPlaces.communityClubs => 'communityclubs',
+      NearbyPlaces.libraries => 'libraries',
+    };
+
     LatLngBounds visibleBounds = _mapController.camera.visibleBounds;
 
     var response = await dio.get(
       'https://www.onemap.gov.sg/api/public/themesvc/retrieveTheme',
       queryParameters: {
-        'queryName': 'hdb_branches',
+        'queryName': queryName,
         'extents':
             '${visibleBounds.south},${visibleBounds.west},${visibleBounds.north},${visibleBounds.east}'
       },
@@ -454,6 +485,7 @@ class _FlutterMapPageState extends State<FlutterMapPage>
         'Authorization': 'ONE_MAP_TOKEN',
       }),
     );
+
     if (response.statusCode == 200) {
       var json = response.data as Map<String, dynamic>;
       var results = json['SrchResults'] as List;
@@ -461,20 +493,26 @@ class _FlutterMapPageState extends State<FlutterMapPage>
       if (!mounted) return;
 
       if (((results[0]["FeatCount"] as int?) ?? 0) > 0) {
-        List<OneMapHdbBranch> hdbBranches = results
+        List<OneMapNearbyPlace> nearbyPlaces = results
             .sublist(1)
-            .map<OneMapHdbBranch>((r) => OneMapHdbBranch.fromJson(r))
+            .map<OneMapNearbyPlace>((r) => switch (place) {
+                  NearbyPlaces.hdbBranches => OneMapHdbBranch.fromJson(r),
+                  NearbyPlaces.communityClubs =>
+                    OneMapCommunityClub.fromJson(r),
+                  NearbyPlaces.libraries => OneMapLibrary.fromJson(r),
+                })
             .toList();
 
         setState(() {
-          _hdbBranches = hdbBranches;
+          _nearbyPlaces = nearbyPlaces;
+          _selectedNearbyPlaces = place;
         });
       } else {
         showDialog(
           context: context,
           builder: (_) => AlertDialog(
             title: const Text("Not found"),
-            content: const Text("No nearby HDB Branches around."),
+            content: Text("No nearby ${place.name} around."),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
@@ -486,4 +524,27 @@ class _FlutterMapPageState extends State<FlutterMapPage>
       }
     }
   }
+}
+
+enum NearbyPlaces {
+  hdbBranches(
+    name: "HDB Branches",
+    icon: "https://www.onemap.gov.sg/images/theme/hdb_branches.jpg",
+  ),
+  communityClubs(
+    name: "Community Clubs",
+    icon: "https://www.onemap.gov.sg/images/theme/paheadquarters.png",
+  ),
+  libraries(
+    name: "Libraries",
+    icon: "https://www.onemap.gov.sg/images/theme/libraries.png",
+  );
+
+  const NearbyPlaces({
+    required this.name,
+    required this.icon,
+  });
+
+  final String name;
+  final String icon;
 }
