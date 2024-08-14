@@ -42,7 +42,7 @@ class _FlutterMapPageState extends State<FlutterMapPage>
 
   final MapController _mapController = MapController();
 
-  bool focusCurrentLocation = false;
+  bool focusCurrentLocation = true;
 
   LatLng? _currentLatLng;
 

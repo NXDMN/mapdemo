@@ -1,10 +1,8 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:mapdemo/current_location_layer.dart';
-import 'package:mapdemo/location_helper.dart';
 import 'package:mapdemo/nearby_places_enum.dart';
 import 'package:mapdemo/nearby_places_layer.dart';
 import 'package:mapdemo/one_map_nearby_place.dart';
@@ -14,7 +12,7 @@ class UIMap extends StatefulWidget {
   const UIMap({
     super.key,
     this.mapController,
-    this.focusCurrentLocation = false,
+    this.focusCurrentLocation = true,
     this.tappedLatLng,
     this.onTap,
     this.selectedNearbyPlaces,
@@ -44,51 +42,18 @@ class _UIMapState extends State<UIMap> {
     const LatLng(1.494, 104.122), //northeast
   );
 
-  Position? initialCurrentPosition;
   late bool focusCurrentLocation;
 
   @override
   void initState() {
     super.initState();
-
     focusCurrentLocation = widget.focusCurrentLocation;
-
-    _getCurrentLocation();
-  }
-
-  void _getCurrentLocation() async {
-    try {
-      initialCurrentPosition = await LocationHelper.getCurrentPosition();
-      if (initialCurrentPosition != null) {
-        setState(() {
-          focusCurrentLocation = true;
-        });
-      }
-    } catch (e) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        showDialog(
-          context: context,
-          builder: (_) => AlertDialog(
-            title: const Text("Location Error"),
-            content: Text(e.toString()),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text("OK"),
-              )
-            ],
-          ),
-        );
-      });
-    }
   }
 
   @override
   void didUpdateWidget(covariant UIMap oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.focusCurrentLocation != oldWidget.focusCurrentLocation) {
-      focusCurrentLocation = widget.focusCurrentLocation;
-    }
+    focusCurrentLocation = widget.focusCurrentLocation;
   }
 
   @override
@@ -201,11 +166,7 @@ class _UIMapState extends State<UIMap> {
           ),
 
         // Current position marker
-        if (initialCurrentPosition != null)
-          CurrentLocationLayer(
-            initialCurrentPosition!,
-            focusCurrentLocation: focusCurrentLocation,
-          ),
+        CurrentLocationLayer(focusCurrentLocation: focusCurrentLocation),
 
         // NearbyPlaces Marker
         NearbyPlacesLayer(

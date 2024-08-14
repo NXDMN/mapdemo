@@ -13,13 +13,11 @@ import 'package:mapdemo/location_helper.dart';
 // Reference: https://github.com/tlserver/flutter_map_location_marker/tree/main
 
 class CurrentLocationLayer extends StatefulWidget {
-  const CurrentLocationLayer(
-    this.initialCurrentPosition, {
+  const CurrentLocationLayer({
     super.key,
-    this.focusCurrentLocation = false,
+    required this.focusCurrentLocation,
   });
 
-  final Position initialCurrentPosition;
   final bool focusCurrentLocation;
 
   @override
@@ -32,34 +30,43 @@ class _CurrentLocationLayerState extends State<CurrentLocationLayer>
   AnimationController? _headingAnimationController;
   double? _currentHeading;
 
-  late StreamSubscription<Position> _positionStreamSubscription;
+  StreamSubscription<Position>? _positionStreamSubscription;
   AnimationController? _positionAnimationController;
   LatLng? _currentLatLng;
+
+  bool _hasLocationPermission = false;
 
   @override
   void initState() {
     super.initState();
 
-    // Get initial value in case of the position is focused (by FlutterMap initialCenter) but no marker render yet
-    // because the stream have not emit
-    _currentLatLng = LatLng(
-      widget.initialCurrentPosition.latitude,
-      widget.initialCurrentPosition.longitude,
-    );
+    startSubscriptions();
+  }
 
-    // Focus the _currentLatLng first in case the position stream
-    // not emit value at the moment the widget is rendered
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      if (widget.focusCurrentLocation) {
-        MapController.of(context).move(
-          _currentLatLng!,
-          19,
-        );
+  void startSubscriptions() async {
+    try {
+      _hasLocationPermission = await LocationHelper.checkPermission();
+      if (_hasLocationPermission) {
+        subscribePositionStream();
+        subscribeHeadingStream();
       }
-    });
-
-    subscribePositionStream();
-    subscribeHeadingStream();
+    } catch (e) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        showDialog(
+          context: context,
+          builder: (_) => AlertDialog(
+            title: const Text("Location Error"),
+            content: Text(e.toString()),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text("OK"),
+              )
+            ],
+          ),
+        );
+      });
+    }
   }
 
   void subscribePositionStream() {
@@ -70,9 +77,13 @@ class _CurrentLocationLayerState extends State<CurrentLocationLayer>
         }
 
         final latTween = Tween<double>(
-            begin: _currentLatLng!.latitude, end: position.latitude);
+          begin: _currentLatLng?.latitude ?? position.latitude,
+          end: position.latitude,
+        );
         final lngTween = Tween<double>(
-            begin: _currentLatLng!.longitude, end: position.longitude);
+          begin: _currentLatLng?.longitude ?? position.longitude,
+          end: position.longitude,
+        );
 
         _positionAnimationController?.dispose();
         _positionAnimationController = AnimationController(
@@ -157,21 +168,27 @@ class _CurrentLocationLayerState extends State<CurrentLocationLayer>
   @override
   void didUpdateWidget(covariant CurrentLocationLayer oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.focusCurrentLocation != oldWidget.focusCurrentLocation &&
-        widget.focusCurrentLocation) {
-      print("manually animated move");
-      MapController.of(context).animatedMove(
-        this,
-        _currentLatLng!,
-        19,
-      );
+    if (!_hasLocationPermission && widget.focusCurrentLocation) {
+      startSubscriptions();
+    } else {
+      if (widget.focusCurrentLocation != oldWidget.focusCurrentLocation &&
+          widget.focusCurrentLocation) {
+        print("manually animated move");
+        MapController.of(context).animatedMove(
+          this,
+          _currentLatLng!,
+          19,
+        );
+      }
     }
   }
 
   @override
   void dispose() {
-    _positionStreamSubscription.cancel();
+    _positionStreamSubscription?.cancel();
+    _positionStreamSubscription = null;
     _headingStreamSubscription?.cancel();
+    _headingStreamSubscription = null;
     _positionAnimationController?.dispose();
     _positionAnimationController = null;
     _headingAnimationController?.dispose();
