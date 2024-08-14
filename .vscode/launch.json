@@ -7,19 +7,23 @@
         {
             "name": "mapdemo",
             "request": "launch",
-            "type": "dart"
+            "type": "dart",
+            "flutterMode": "debug",
+            "toolArgs": ["--dart-define-from-file", "secrets.json"],
         },
         {
             "name": "mapdemo (profile mode)",
             "request": "launch",
             "type": "dart",
-            "flutterMode": "profile"
+            "flutterMode": "profile",
+            "toolArgs": ["--dart-define-from-file", "secrets.json"]
         },
         {
             "name": "mapdemo (release mode)",
             "request": "launch",
             "type": "dart",
-            "flutterMode": "release"
+            "flutterMode": "release",
+            "toolArgs": ["--dart-define-from-file", "secrets.json"]
         }
     ]
 }

@@ -101,7 +101,7 @@ class _FlutterMapPageState extends State<FlutterMapPage>
                   mapController: _mapController,
                   focusCurrentLocation: focusCurrentLocation,
                   tappedLatLng: _currentLatLng,
-                    onTap: (_, latlng) => _addMarkerAndMoveCamera(latlng),
+                  onTap: (_, latlng) => _addMarkerAndMoveCamera(latlng),
                   selectedNearbyPlaces: _selectedNearbyPlaces,
                   nearbyPlaces: _nearbyPlaces,
                 ),
@@ -140,20 +140,20 @@ class _FlutterMapPageState extends State<FlutterMapPage>
         children: [
           FloatingActionButton(
             heroTag: "streetview",
-                            onPressed: _onStreetViewPressed,
+            onPressed: _onStreetViewPressed,
             shape: const CircleBorder(),
             child: const Icon(Icons.streetview),
-                          ),
+          ),
           const SizedBox(height: 10),
           FloatingActionButton(
             heroTag: "currentlocation",
             onPressed: () => setState(() => focusCurrentLocation = true),
             shape: const CircleBorder(),
             child: const Icon(Icons.my_location),
-                      ),
+          ),
           const SizedBox(height: 10),
-              ],
-            ),
+        ],
+      ),
     );
   }
 
@@ -180,23 +180,23 @@ class _FlutterMapPageState extends State<FlutterMapPage>
       // is latlng
       LatLng? latLng = s.toLatLng();
       if (latLng != null) {
-          if (latLng.checkWithinBounds(sgBounds)) {
-            _addMarkerAndMoveCamera(latLng);
-          } else {
-            showDialog(
-              context: context,
-              builder: (_) => AlertDialog(
-                title: const Text("Error"),
-                content: const Text("Exceed bounds"),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text("OK"),
-                  )
-                ],
-              ),
-            );
-          }
+        if (latLng.checkWithinBounds(sgBounds)) {
+          _addMarkerAndMoveCamera(latLng);
+        } else {
+          showDialog(
+            context: context,
+            builder: (_) => AlertDialog(
+              title: const Text("Error"),
+              content: const Text("Exceed bounds"),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text("OK"),
+                )
+              ],
+            ),
+          );
+        }
       } else {
         showDialog(
           context: context,
@@ -232,6 +232,7 @@ class _FlutterMapPageState extends State<FlutterMapPage>
             _addMarkerAndMoveCamera(LatLng(location.lat!, location.lng!));
           }
         } else {
+          if (!mounted) return;
           showDialog(
             context: context,
             builder: (_) => AlertDialog(
@@ -314,7 +315,12 @@ class _FlutterMapPageState extends State<FlutterMapPage>
     // Check if panorama exists at the location, this require to enable Street View Static API,
     // this requests are available at no charge because it is metadata requests.
     var response = await dio.get(
-        'https://maps.googleapis.com/maps/api/streetview/metadata?location=${latLng.latitude},${latLng.longitude}&key=API_KEY');
+      'https://maps.googleapis.com/maps/api/streetview/metadata',
+      queryParameters: {
+        'location': "${latLng.latitude},${latLng.longitude}",
+        'key': const String.fromEnvironment('MAPS_API_KEY'),
+      },
+    );
     if (response.statusCode == 200) {
       if (!mounted) return;
 
@@ -360,9 +366,11 @@ class _FlutterMapPageState extends State<FlutterMapPage>
         'extents':
             '${visibleBounds.south},${visibleBounds.west},${visibleBounds.north},${visibleBounds.east}'
       },
-      options: Options(headers: {
-        'Authorization': 'ONE_MAP_TOKEN',
-      }),
+      options: Options(
+        headers: {
+          'Authorization': const String.fromEnvironment('ONE_MAP_TOKEN'),
+        },
+      ),
     );
 
     if (response.statusCode == 200) {
