@@ -1,20 +1,18 @@
 import 'package:dio/dio.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:mapdemo/current_location_layer.dart';
 import 'package:mapdemo/extensions.dart';
 import 'package:mapdemo/location_helper.dart';
-import 'package:mapdemo/nearby_places_layer.dart';
+import 'package:mapdemo/nearby_places_enum.dart';
 import 'package:mapdemo/one_map_community_club.dart';
 import 'package:mapdemo/one_map_hdb_branch.dart';
 import 'package:mapdemo/one_map_library.dart';
 import 'package:mapdemo/one_map_nearby_place.dart';
 import 'package:mapdemo/one_map_search_results.dart';
 import 'package:mapdemo/street_view_page.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:mapdemo/ui_map.dart';
 
 /*
 1. able to plot marker on the map
@@ -44,7 +42,6 @@ class _FlutterMapPageState extends State<FlutterMapPage>
 
   final MapController _mapController = MapController();
 
-  Position? _currentLocation;
   bool focusCurrentLocation = false;
 
   LatLng? _currentLatLng;
@@ -53,43 +50,6 @@ class _FlutterMapPageState extends State<FlutterMapPage>
   List<OneMapNearbyPlace> _nearbyPlaces = [];
 
   bool isbusy = false;
-  @override
-  void initState() {
-    super.initState();
-
-    _getCurrentLocation();
-  }
-
-  void _getCurrentLocation() async {
-    setState(() {
-      isbusy = true;
-    });
-    try {
-      _currentLocation = await LocationHelper.getCurrentPosition();
-      if (_currentLocation != null) {
-        focusCurrentLocation = true;
-      }
-    } catch (e) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        showDialog(
-          context: context,
-          builder: (_) => AlertDialog(
-            title: const Text("Location Error"),
-            content: Text(e.toString()),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text("OK"),
-              )
-            ],
-          ),
-        );
-      });
-    }
-    setState(() {
-      isbusy = false;
-    });
-  }
 
   @override
   void dispose() {
@@ -137,134 +97,13 @@ class _FlutterMapPageState extends State<FlutterMapPage>
           ? const Center(child: CircularProgressIndicator())
           : Stack(
               children: [
-                FlutterMap(
+                UIMap(
                   mapController: _mapController,
-                  options: MapOptions(
-                    minZoom: 11,
-                    maxZoom: 19,
-                    initialZoom: _currentLocation != null ? 19 : 12,
-                    initialCenter: _currentLocation != null
-                        ? LatLng(_currentLocation!.latitude,
-                            _currentLocation!.longitude)
-                        : const LatLng(1.354378, 103.833669),
+                  focusCurrentLocation: focusCurrentLocation,
+                  tappedLatLng: _currentLatLng,
                     onTap: (_, latlng) => _addMarkerAndMoveCamera(latlng),
-                    onMapEvent: (event) {
-                      if (event is MapEventMoveStart) {
-                        setState(() {
-                          focusCurrentLocation = false;
-                        });
-                      }
-                    },
-                    cameraConstraint: CameraConstraint.contain(
-                      bounds: sgBounds,
-                    ),
-                    keepAlive: true,
-                  ),
-                  children: [
-                    // Base map
-                    TileLayer(
-                      // This will cause target location not render after moved if use focusNode.unfocus
-                      // but we need unfocus search bar keyboard so comment this
-                      // tileUpdateTransformer: MapControllerExtension
-                      //     .animatedMoveTileUpdateTransformer,
-                      urlTemplate:
-                          "https://www.onemap.gov.sg/maps/tiles/Default_HD/{z}/{x}/{y}.png",
-                      userAgentPackageName: "com.example.mapdemo",
-                    ),
-
-                    if (_currentLocation != null)
-                      CurrentLocationLayer(
-                        _currentLocation!,
-                        focusCurrentLocation: focusCurrentLocation,
-                      ),
-
-                    // CurrentMarker
-                    if (_currentLatLng != null)
-                      MarkerLayer(
-                        rotate: true,
-                        markers: [
-                          Marker(
-                            point: _currentLatLng!,
-                            width: 50,
-                            height: 50,
-                            child: const Icon(
-                              Icons.location_pin,
-                              size: 50,
-                              color: Colors.red,
-                            ),
-                          )
-                        ],
-                      ),
-
-                    // NearbyPlaces Marker
-                    NearbyPlacesLayer(
-                      places: _nearbyPlaces,
-                      markerIcon: _selectedNearbyPlaces != null
-                          ? Image.network(_selectedNearbyPlaces!.icon)
-                          : const SizedBox.shrink(),
-                    ),
-
-                    // Attribute (https://www.onemap.gov.sg/docs/maps/)
-                    Align(
-                      alignment: Alignment.bottomRight,
-                      child: ColoredBox(
-                        color: Colors.white70,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Image.network(
-                              'https://www.onemap.gov.sg/web-assets/images/logo/om_logo.png',
-                              width: 18,
-                              height: 18,
-                            ),
-                            RichText(
-                              text: TextSpan(
-                                style: const TextStyle(fontSize: 10),
-                                children: [
-                                  TextSpan(
-                                    text: " OneMap",
-                                    style: const TextStyle(
-                                      color: Colors.blue,
-                                    ),
-                                    recognizer: TapGestureRecognizer()
-                                      ..onTap = () async {
-                                        final url = Uri.parse(
-                                            'https://www.onemap.gov.sg/');
-                                        if (!await launchUrl(url)) {
-                                          throw Exception(
-                                              'Could not launch $url');
-                                        }
-                                      },
-                                  ),
-                                  const TextSpan(
-                                    text: ' © contributors | ',
-                                    style: TextStyle(
-                                      color: Colors.black,
-                                    ),
-                                  ),
-                                  TextSpan(
-                                    text: "Singapore Land Authority ",
-                                    style: const TextStyle(
-                                      color: Colors.blue,
-                                    ),
-                                    recognizer: TapGestureRecognizer()
-                                      ..onTap = () async {
-                                        final url = Uri.parse(
-                                            'https://www.sla.gov.sg/');
-                                        if (!await launchUrl(url)) {
-                                          throw Exception(
-                                              'Could not launch $url');
-                                        }
-                                      },
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    )
-                  ],
+                  selectedNearbyPlaces: _selectedNearbyPlaces,
+                  nearbyPlaces: _nearbyPlaces,
                 ),
 
                 // Page control
@@ -465,9 +304,11 @@ class _FlutterMapPageState extends State<FlutterMapPage>
     } else {
       Position? position = await LocationHelper.getCurrentPosition();
       if (position != null) {
-        _currentLocation = position;
+        latLng = LatLng(position.latitude, position.longitude);
+      } else {
+        // No selected location and no current location
+        latLng = const LatLng(1.354378, 103.833669);
       }
-      latLng = LatLng(_currentLocation!.latitude, _currentLocation!.longitude);
     }
 
     // Check if panorama exists at the location, this require to enable Street View Static API,
@@ -562,27 +403,4 @@ class _FlutterMapPageState extends State<FlutterMapPage>
       }
     }
   }
-}
-
-enum NearbyPlaces {
-  hdbBranches(
-    name: "HDB Branches",
-    icon: "https://www.onemap.gov.sg/images/theme/hdb_branches.jpg",
-  ),
-  communityClubs(
-    name: "Community Clubs",
-    icon: "https://www.onemap.gov.sg/images/theme/paheadquarters.png",
-  ),
-  libraries(
-    name: "Libraries",
-    icon: "https://www.onemap.gov.sg/images/theme/libraries.png",
-  );
-
-  const NearbyPlaces({
-    required this.name,
-    required this.icon,
-  });
-
-  final String name;
-  final String icon;
 }

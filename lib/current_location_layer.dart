@@ -47,6 +47,17 @@ class _CurrentLocationLayerState extends State<CurrentLocationLayer>
       widget.initialCurrentPosition.longitude,
     );
 
+    // Focus the _currentLatLng first in case the position stream
+    // not emit value at the moment the widget is rendered
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (widget.focusCurrentLocation) {
+        MapController.of(context).move(
+          _currentLatLng!,
+          19,
+        );
+      }
+    });
+
     subscribePositionStream();
     subscribeHeadingStream();
   }
