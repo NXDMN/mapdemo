@@ -160,6 +160,7 @@ class _FlutterMapPageState extends State<FlutterMapPage>
   void _addMarkerAndMoveCamera(LatLng latLng) {
     setState(() {
       _currentLatLng = latLng;
+      focusCurrentLocation = false;
     });
 
     //_mapController.move(latLng, 19);
