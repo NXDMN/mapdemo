@@ -13,9 +13,9 @@ import 'package:mapdemo/native/street_view_types.dart';
 // Reference: https://github.com/zyzdev/flutter_street_view
 
 class FlutterStreetView extends StatefulWidget {
-  const FlutterStreetView(
-    this.initPosition, {
+  const FlutterStreetView({
     super.key,
+    required this.initPosition,
     this.onCameraChange,
     this.onPanoramaChange,
     this.onPanoramaClick,

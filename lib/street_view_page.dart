@@ -20,7 +20,7 @@ class _StreetViewPageState extends State<StreetViewPage> {
         title: const Text('Flutter Street View'),
       ),
       body: FlutterStreetView(
-        widget.initPosition,
+        initPosition: widget.initPosition,
         onCameraChange: (camera) {
           print('CameraChange:$camera');
         },
