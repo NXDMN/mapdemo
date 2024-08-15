@@ -26,6 +26,7 @@ class _NearbyPlacesLayerState extends State<NearbyPlacesLayer> {
   void didUpdateWidget(covariant NearbyPlacesLayer oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.places != oldWidget.places) {
+      showInfoWindows.clear();
       for (var place in widget.places) {
         showInfoWindows["${place.name}_${place.latlng}"] = false;
       }
