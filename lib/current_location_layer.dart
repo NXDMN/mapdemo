@@ -231,6 +231,8 @@ class _CurrentLocationLayerState extends State<CurrentLocationLayer>
             ),
           ),
         ),
+        // Note: For location marker of size 20x20 and heading marker of size 10x10,
+        // the ratio of rotation alignment to translate offset is approximately 1:5
         if (_currentHeading != null)
           Marker(
             width: 10,
