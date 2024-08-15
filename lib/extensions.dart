@@ -119,7 +119,10 @@ extension MapControllerExtension on MapController {
       // the target zoom/location.
     } else if (id == _finishedId) {
       // We already prefetched the tiles when animation started so just prune.
-      sink.add(updateEvent.pruneOnly());
+      //sink.add(updateEvent.pruneOnly());
+
+      // Don't prune to prevent tiles not load if other widget unfocus
+      sink.add(updateEvent);
     } else {
       sink.add(updateEvent);
     }

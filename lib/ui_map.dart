@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:mapdemo/current_location_layer.dart';
+import 'package:mapdemo/extensions.dart';
 import 'package:mapdemo/nearby_places_enum.dart';
 import 'package:mapdemo/nearby_places_layer.dart';
 import 'package:mapdemo/one_map_nearby_place.dart';
@@ -81,10 +82,8 @@ class _UIMapState extends State<UIMap> {
       children: [
         // Base map
         TileLayer(
-          // This will cause target location not render after moved if use focusNode.unfocus
-          // but we need unfocus search bar keyboard so comment this
-          // tileUpdateTransformer: MapControllerExtension
-          //     .animatedMoveTileUpdateTransformer,
+          tileUpdateTransformer:
+              MapControllerExtension.animatedMoveTileUpdateTransformer,
           urlTemplate:
               "https://www.onemap.gov.sg/maps/tiles/Default_HD/{z}/{x}/{y}.png",
           userAgentPackageName: "com.example.mapdemo",
