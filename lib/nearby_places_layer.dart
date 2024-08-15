@@ -76,6 +76,8 @@ class _NearbyPlacesLayerState extends State<NearbyPlacesLayer> {
   Widget build(BuildContext context) {
     if (widget.places.isEmpty) return const SizedBox.shrink();
 
+    markers.clear();
+
     return MarkerLayer(
       rotate: true,
       markers: widget.places.map<Marker>((place) {
