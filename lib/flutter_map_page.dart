@@ -392,6 +392,7 @@ class _FlutterMapPageState extends State<FlutterMapPage>
             .toList();
 
         setState(() {
+          focusCurrentLocation = false;
           _nearbyPlaces = nearbyPlaces;
           _selectedNearbyPlaces = place;
         });
