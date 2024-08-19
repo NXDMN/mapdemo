@@ -4,7 +4,6 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:mapdemo/current_location_layer.dart';
 import 'package:mapdemo/extensions.dart';
-import 'package:mapdemo/nearby_places_enum.dart';
 import 'package:mapdemo/nearby_places_layer.dart';
 import 'package:mapdemo/one_map_nearby_place.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -16,16 +15,16 @@ class UIMap extends StatefulWidget {
     this.focusCurrentLocation = true,
     this.tappedLatLng,
     this.onTap,
-    this.selectedNearbyPlaces,
     this.nearbyPlaces = const [],
+    this.nearbyMarkerIcon,
   });
 
   final MapController? mapController;
   final bool focusCurrentLocation;
   final LatLng? tappedLatLng;
   final void Function(TapPosition, LatLng)? onTap;
-  final NearbyPlaces? selectedNearbyPlaces;
   final List<OneMapNearbyPlace> nearbyPlaces;
+  final Widget? nearbyMarkerIcon;
 
   @override
   State<UIMap> createState() => _UIMapState();
@@ -35,8 +34,8 @@ class _UIMapState extends State<UIMap> {
   MapController? get mapController => widget.mapController;
   LatLng? get tappedLatLng => widget.tappedLatLng;
   void Function(TapPosition, LatLng)? get onTap => widget.onTap;
-  NearbyPlaces? get selectedNearbyPlaces => widget.selectedNearbyPlaces;
   List<OneMapNearbyPlace> get nearbyPlaces => widget.nearbyPlaces;
+  Widget? get nearbyMarkerIcon => widget.nearbyMarkerIcon;
 
   final sgBounds = LatLngBounds(
     const LatLng(1.144, 103.585), //southwest
@@ -170,9 +169,7 @@ class _UIMapState extends State<UIMap> {
         // NearbyPlaces Marker
         NearbyPlacesLayer(
           places: nearbyPlaces,
-          markerIcon: selectedNearbyPlaces != null
-              ? Image.network(selectedNearbyPlaces!.icon)
-              : const SizedBox.shrink(),
+          markerIcon: nearbyMarkerIcon ?? const SizedBox.shrink(),
         ),
       ],
     );

@@ -102,8 +102,10 @@ class _FlutterMapPageState extends State<FlutterMapPage>
                   focusCurrentLocation: focusCurrentLocation,
                   tappedLatLng: _currentLatLng,
                   onTap: (_, latlng) => _addMarkerAndMoveCamera(latlng),
-                  selectedNearbyPlaces: _selectedNearbyPlaces,
                   nearbyPlaces: _nearbyPlaces,
+                  nearbyMarkerIcon: _selectedNearbyPlaces != null
+                      ? Image.network(_selectedNearbyPlaces!.icon)
+                      : const SizedBox.shrink(),
                 ),
 
                 // Page control
@@ -169,6 +171,7 @@ class _FlutterMapPageState extends State<FlutterMapPage>
 
   final latlngRegex = RegExp(
       r'^[-+]?([1-8]?\d(\.\d+)?|90(\.0+)?),\s*[-+]?(180(\.0+)?|((1[0-7]\d)|([1-9]?\d))(\.\d+)?)$');
+
   void _goToLatLng(String s) async {
     _searchController.closeView(s);
     _searchFocusNode.unfocus();
@@ -291,7 +294,7 @@ class _FlutterMapPageState extends State<FlutterMapPage>
     }
     return [
       const ListTile(
-        title: Text("Not results found"),
+        title: Text("No results found"),
       )
     ];
   }
