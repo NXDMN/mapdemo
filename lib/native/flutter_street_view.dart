@@ -16,6 +16,7 @@ class FlutterStreetView extends StatefulWidget {
   const FlutterStreetView({
     super.key,
     required this.initPosition,
+    this.source = StreetViewSource.def,
     this.onCameraChange,
     this.onPanoramaChange,
     this.onPanoramaClick,
@@ -23,6 +24,7 @@ class FlutterStreetView extends StatefulWidget {
   });
 
   final LatLng initPosition;
+  final StreetViewSource source;
   final void Function(StreetViewPanoramaCamera)? onCameraChange;
   final void Function(StreetViewPanoramaLocation?, Exception?)?
       onPanoramaChange;
@@ -45,6 +47,7 @@ class _FlutterStreetViewState extends State<FlutterStreetView> {
         widget.initPosition.latitude,
         widget.initPosition.longitude
       ],
+      'source': widget.source.toJson()
     };
 
     switch (defaultTargetPlatform) {

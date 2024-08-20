@@ -322,6 +322,7 @@ class _FlutterMapPageState extends State<FlutterMapPage>
       'https://maps.googleapis.com/maps/api/streetview/metadata',
       queryParameters: {
         'location': "${latLng.latitude},${latLng.longitude}",
+        'source': 'default', //"default","outdoor"
         'key': const String.fromEnvironment('MAPS_API_KEY'),
       },
     );

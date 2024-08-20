@@ -128,6 +128,10 @@ class _CurrentLocationLayerState extends State<CurrentLocationLayer>
   void subscribeHeadingStream() {
     _headingStreamSubscription =
         LocationHelper.getHeadingStream()?.listen((event) {
+      if (!mounted) {
+        return;
+      }
+
       // Convert to radian (Transform.rotate use radian)
       final heading = event.heading! * (pi / 180.0);
 
@@ -168,7 +172,10 @@ class _CurrentLocationLayerState extends State<CurrentLocationLayer>
   @override
   void didUpdateWidget(covariant CurrentLocationLayer oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (!_hasLocationPermission && widget.focusCurrentLocation) {
+    if (_currentLatLng == null ||
+        (!_hasLocationPermission && widget.focusCurrentLocation)) {
+      _positionStreamSubscription?.cancel();
+      _headingStreamSubscription?.cancel();
       startSubscriptions();
     } else {
       if (widget.focusCurrentLocation != oldWidget.focusCurrentLocation &&

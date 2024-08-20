@@ -13,6 +13,7 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.StreetViewPanoramaCamera
 import com.google.android.gms.maps.model.StreetViewPanoramaLocation
 import com.google.android.gms.maps.model.StreetViewPanoramaOrientation
+import com.google.android.gms.maps.model.StreetViewSource
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding.OnSaveInstanceStateListener
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
@@ -62,7 +63,14 @@ internal class FlutterStreetView(
                     LatLng((data[0]!! as Double), (data[1]!! as Double))
                 else null
 
-                position(initPosition)
+                val source = if (creationParams.containsKey("source") && creationParams["source"] != null){
+                    if (creationParams["source"] == "outdoor") StreetViewSource.OUTDOOR else StreetViewSource.DEFAULT
+                }else null
+
+                if (source != null)
+                    position(initPosition, source)
+                else
+                    position(initPosition)
             }
 
         } else StreetViewPanoramaOptions()
