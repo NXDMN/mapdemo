@@ -44,16 +44,30 @@ class FlutterStreetView: NSObject, FlutterPlatformView, GMSPanoramaViewDelegate,
         let param = args! as NSDictionary
         
         if(param["initPosition"] != nil) {
-            let tmp = param["initPosition"]
             var pos:CLLocationCoordinate2D? = nil
             
-            if(tmp is NSArray) {
-                let pos_ = tmp as! [Double]
+            if(param["initPosition"] is NSArray) {
+                let pos_ = param["initPosition"] as! [Double]
                 pos = CLLocationCoordinate2D(latitude: pos_[0], longitude: pos_[1])
             }
             
+            var source:GMSPanoramaSource? = nil
+
+            if(param["source"] != nil) {
+                if(param["source"] is String){
+                    let source_ = param["source"] as! String
+                    if(source_ == "outdoor") {
+                        source = GMSPanoramaSource.outside
+                    }
+                }
+            }
+            
             if(pos != nil) {
-                streetViewPanorama.moveNearCoordinate(pos!)
+                if(source != nil){
+                    streetViewPanorama.moveNearCoordinate(pos!, source: source!)
+                }else{
+                    streetViewPanorama.moveNearCoordinate(pos!)
+                }
             }
         }
     }
