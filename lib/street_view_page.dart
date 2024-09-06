@@ -19,6 +19,11 @@ class _StreetViewPageState extends State<StreetViewPage> {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: const Text('Flutter Street View'),
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => Navigator.pop(context),
+        shape: const CircleBorder(),
+        child: const Icon(Icons.map),
+      ),
       body: FlutterStreetView(
         initPosition: widget.initPosition,
         onCameraChange: (camera) {

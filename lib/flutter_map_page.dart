@@ -109,11 +109,8 @@ class _FlutterMapPageState extends State<FlutterMapPage>
                 ),
 
                 // Page control
-                Padding(
-                  padding: const EdgeInsets.all(10.0),
-                  child: Column(
-                    children: [
                       SearchAnchor(
+                  viewShape: const RoundedRectangleBorder(),
                         searchController: _searchController,
                         isFullScreen: false,
                         viewLeading: IconButton(
@@ -125,15 +122,34 @@ class _FlutterMapPageState extends State<FlutterMapPage>
                           },
                         ),
                         viewOnSubmitted: _goToLatLng,
-                        builder: (context, controller) => SearchBar(
+                  builder: (context, controller) => TextField(
+                    textAlign: TextAlign.center,
+                    decoration: const InputDecoration(
+                      contentPadding: EdgeInsets.fromLTRB(5, 15, 0, 15),
+                      border: InputBorder.none,
+                      hintText: 'Search',
+                      hintStyle: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey,
+                        fontSize: 18,
+                      ),
+                      filled: true,
+                      fillColor: Colors.white70,
+                      suffixIconConstraints:
+                          BoxConstraints(minWidth: 0, minHeight: 0),
+                      suffixIcon: Padding(
+                        padding: EdgeInsets.only(right: 5),
+                        child: Icon(
+                          Icons.search,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ),
                           controller: controller,
                           focusNode: _searchFocusNode,
                           onTap: () => controller.openView(),
                         ),
                         suggestionsBuilder: _generateSuggestion,
-                      ),
-                    ],
-                  ),
                 ),
               ],
             ),
