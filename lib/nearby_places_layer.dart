@@ -23,6 +23,14 @@ class _NearbyPlacesLayerState extends State<NearbyPlacesLayer> {
   Map<String, bool> showInfoWindows = <String, bool>{};
 
   @override
+  void initState() {
+    super.initState();
+    for (var place in widget.places) {
+      showInfoWindows["${place.name}_${place.latlng}"] = false;
+    }
+  }
+
+  @override
   void didUpdateWidget(covariant NearbyPlacesLayer oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.places != oldWidget.places) {
