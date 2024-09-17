@@ -10,6 +10,10 @@ enum NearbyPlaces {
   libraries(
     name: "Libraries",
     icon: "https://www.onemap.gov.sg/images/theme/libraries.png",
+  ),
+  hawkerCentres(
+    name: "Hawker Centres",
+    icon: "https://www.onemap.gov.sg/images/theme/ssot_hawkercentres.png",
   );
 
   const NearbyPlaces({

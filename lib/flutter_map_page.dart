@@ -7,6 +7,7 @@ import 'package:mapdemo/extensions.dart';
 import 'package:mapdemo/location_helper.dart';
 import 'package:mapdemo/nearby_places_enum.dart';
 import 'package:mapdemo/one_map_community_club.dart';
+import 'package:mapdemo/one_map_hawker_centres.dart';
 import 'package:mapdemo/one_map_hdb_branch.dart';
 import 'package:mapdemo/one_map_library.dart';
 import 'package:mapdemo/one_map_nearby_place.dart';
@@ -84,7 +85,7 @@ class _FlutterMapPageState extends State<FlutterMapPage>
               (int index) {
                 final place = NearbyPlaces.values[index];
                 return MenuItemButton(
-                  onPressed: () => _searchNearbyPlaces(place),
+                  onPressed: () => _searchNearbyPlacesOmapp(place),
                   leadingIcon: Image.network(place.icon, width: 30, height: 30),
                   child: Text(place.name),
                 );
@@ -376,6 +377,7 @@ class _FlutterMapPageState extends State<FlutterMapPage>
       NearbyPlaces.hdbBranches => 'hdb_branches',
       NearbyPlaces.communityClubs => 'communityclubs',
       NearbyPlaces.libraries => 'libraries',
+      NearbyPlaces.hawkerCentres => 'ssot_hawkercentres',
     };
 
     LatLngBounds visibleBounds = _mapController.camera.visibleBounds;
@@ -408,6 +410,7 @@ class _FlutterMapPageState extends State<FlutterMapPage>
                   NearbyPlaces.communityClubs =>
                     OneMapCommunityClub.fromJson(r),
                   NearbyPlaces.libraries => OneMapLibrary.fromJson(r),
+                  NearbyPlaces.hawkerCentres => OneMapHawkerCentre.fromJson(r),
                 })
             .toList();
 
@@ -415,6 +418,82 @@ class _FlutterMapPageState extends State<FlutterMapPage>
           focusCurrentLocation = false;
           _nearbyPlaces = nearbyPlaces;
           _selectedNearbyPlaces = place;
+        });
+      } else {
+        showDialog(
+          context: context,
+          builder: (_) => AlertDialog(
+            title: const Text("Not found"),
+            content: Text("No nearby ${place.name} around."),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text("OK"),
+              )
+            ],
+          ),
+        );
+      }
+    }
+  }
+
+  void _searchNearbyPlacesOmapp(NearbyPlaces place) async {
+    final queryName = switch (place) {
+      NearbyPlaces.hdbBranches => 'hdb_branches',
+      NearbyPlaces.communityClubs => 'communityclubs',
+      NearbyPlaces.libraries => 'libraries',
+      NearbyPlaces.hawkerCentres => 'ssot_hawkercentres'
+    };
+    var response = await dio.get('https://www.onemap.gov.sg');
+    var cookies = response.headers.map['set-cookie'];
+
+    LatLng center = _mapController.camera.center;
+    LatLng northBound =
+        LatLng(_mapController.camera.visibleBounds.north, center.longitude);
+    // LatLng westBound =
+    //     LatLng(center.latitude, _mapController.camera.visibleBounds.west);
+
+    final distance = const Distance().as(LengthUnit.Meter, center, northBound);
+
+    response = await dio.get(
+      'https://www.onemap.gov.sg/omapp/getNearbyThemeInfo',
+      queryParameters: {
+        'lat': center.latitude,
+        'lng': center.longitude,
+        'dist': distance,
+        'theme': queryName
+      },
+      options: Options(
+        headers: {
+          'Cookie': cookies?.join(';'),
+        },
+      ),
+    );
+
+    if (response.statusCode == 200) {
+      var json = response.data as Map<String, dynamic>;
+      var results = json['SrchResults'] as List;
+
+      if (!mounted) return;
+
+      if (((results[0]["FeatCount"] as int?) ?? 0) > 0) {
+        List<OneMapNearbyPlace> nearbyPlaces = results
+            .sublist(1)
+            .map<OneMapNearbyPlace>((r) => switch (place) {
+                  NearbyPlaces.hdbBranches => OneMapHdbBranch.fromJson(r),
+                  NearbyPlaces.communityClubs =>
+                    OneMapCommunityClub.fromJson(r),
+                  NearbyPlaces.libraries => OneMapLibrary.fromJson(r),
+                  NearbyPlaces.hawkerCentres => OneMapHawkerCentre.fromJson(r),
+                })
+            .toList();
+
+        setState(() {
+          focusCurrentLocation = false;
+          _nearbyPlaces = nearbyPlaces;
+          _selectedNearbyPlaces = place;
+          _center = center;
+          _radius = distance;
         });
       } else {
         showDialog(

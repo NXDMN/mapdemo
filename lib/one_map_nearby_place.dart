@@ -9,7 +9,7 @@ class OneMapNearbyPlace {
   final String addressPostalCode;
   final String addressStreetName;
   final String? addressUnitNumber;
-  final String type;
+  final String? type;
   final LatLng? latlng;
   final String iconName;
 
@@ -21,7 +21,7 @@ class OneMapNearbyPlace {
     required this.addressPostalCode,
     required this.addressStreetName,
     this.addressUnitNumber,
-    required this.type,
+    this.type,
     required this.latlng,
     required this.iconName,
   });
@@ -47,7 +47,7 @@ class OneMapNearbyPlace {
         "ADDRESSPOSTALCODE": addressPostalCode,
         "ADDRESSSTREETNAME": addressStreetName,
         if (addressUnitNumber != null) "ADDRESSUNITNUMBER": addressUnitNumber,
-        "Type": type,
+        if (type != null) "Type": type,
         "LatLng": latlng,
         "ICON_NAME": iconName,
       };
