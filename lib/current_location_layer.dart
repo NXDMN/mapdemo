@@ -216,6 +216,7 @@ class _CurrentLocationLayerState extends State<CurrentLocationLayer>
           height: 20,
           point: _currentLatLng!,
           child: const DecoratedBox(
+            key: Key("CurrentLocationMarker"),
             decoration: BoxDecoration(
               color: Colors.white,
               shape: BoxShape.circle,
@@ -246,6 +247,7 @@ class _CurrentLocationLayerState extends State<CurrentLocationLayer>
             height: 10,
             point: _currentLatLng!,
             child: Transform.translate(
+              key: const Key("HeadingMarker"),
               offset: const Offset(0.0, -18.0),
               child: Transform.rotate(
                 alignment: const Alignment(0, 3.6),
