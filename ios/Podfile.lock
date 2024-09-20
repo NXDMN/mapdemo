@@ -1,7 +1,5 @@
 PODS:
   - Flutter (1.0.0)
-  - flutter_compass (0.0.1):
-    - Flutter
   - geolocator_apple (1.2.0):
     - Flutter
   - GoogleMaps (9.0.0):
@@ -14,7 +12,6 @@ PODS:
 
 DEPENDENCIES:
   - Flutter (from `Flutter`)
-  - flutter_compass (from `.symlinks/plugins/flutter_compass/ios`)
   - geolocator_apple (from `.symlinks/plugins/geolocator_apple/ios`)
   - GoogleMaps (= 9.0.0)
   - url_launcher_ios (from `.symlinks/plugins/url_launcher_ios/ios`)
@@ -26,8 +23,6 @@ SPEC REPOS:
 EXTERNAL SOURCES:
   Flutter:
     :path: Flutter
-  flutter_compass:
-    :path: ".symlinks/plugins/flutter_compass/ios"
   geolocator_apple:
     :path: ".symlinks/plugins/geolocator_apple/ios"
   url_launcher_ios:
@@ -35,7 +30,6 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
-  flutter_compass: cbbd285cea1584c7ac9c4e0c3e1f17cbea55e855
   geolocator_apple: 6cbaf322953988e009e5ecb481f07efece75c450
   GoogleMaps: 4907d0d42bf8cd58f56743e31f91d23c10682745
   url_launcher_ios: 5334b05cef931de560670eeae103fd3e431ac3fe
