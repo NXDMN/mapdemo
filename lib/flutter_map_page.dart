@@ -60,6 +60,9 @@ class _FlutterMapPageState extends State<FlutterMapPage>
     super.dispose();
   }
 
+  LatLng? _center;
+  double? _radius;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -107,22 +110,24 @@ class _FlutterMapPageState extends State<FlutterMapPage>
                   nearbyMarkerIcon: _selectedNearbyPlaces != null
                       ? Image.network(_selectedNearbyPlaces!.icon)
                       : const SizedBox.shrink(),
+                  center: _center,
+                  radius: _radius,
                 ),
 
                 // Page control
-                      SearchAnchor(
+                SearchAnchor(
                   viewShape: const RoundedRectangleBorder(),
-                        searchController: _searchController,
-                        isFullScreen: false,
-                        viewLeading: IconButton(
-                          icon: const Icon(Icons.arrow_back),
-                          onPressed: () {
-                            _searchController.closeView(null);
-                            _searchController.text = "";
-                            _searchFocusNode.unfocus();
-                          },
-                        ),
-                        viewOnSubmitted: _goToLatLng,
+                  searchController: _searchController,
+                  isFullScreen: false,
+                  viewLeading: IconButton(
+                    icon: const Icon(Icons.arrow_back),
+                    onPressed: () {
+                      _searchController.closeView(null);
+                      _searchController.text = "";
+                      _searchFocusNode.unfocus();
+                    },
+                  ),
+                  viewOnSubmitted: _goToLatLng,
                   builder: (context, controller) => TextField(
                     textAlign: TextAlign.center,
                     decoration: const InputDecoration(
@@ -146,11 +151,11 @@ class _FlutterMapPageState extends State<FlutterMapPage>
                         ),
                       ),
                     ),
-                          controller: controller,
-                          focusNode: _searchFocusNode,
-                          onTap: () => controller.openView(),
-                        ),
-                        suggestionsBuilder: _generateSuggestion,
+                    controller: controller,
+                    focusNode: _searchFocusNode,
+                    onTap: () => controller.openView(),
+                  ),
+                  suggestionsBuilder: _generateSuggestion,
                 ),
               ],
             ),

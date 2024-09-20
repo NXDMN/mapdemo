@@ -17,6 +17,8 @@ class UIMap extends StatefulWidget {
     this.onTap,
     this.nearbyPlaces = const [],
     this.nearbyMarkerIcon,
+    this.center,
+    this.radius,
   });
 
   final MapController? mapController;
@@ -25,6 +27,8 @@ class UIMap extends StatefulWidget {
   final void Function(TapPosition, LatLng)? onTap;
   final List<OneMapNearbyPlace> nearbyPlaces;
   final Widget? nearbyMarkerIcon;
+  final LatLng? center;
+  final double? radius;
 
   @override
   State<UIMap> createState() => _UIMapState();
@@ -166,6 +170,14 @@ class _UIMapState extends State<UIMap> {
         // Current position marker
         CurrentLocationLayer(focusCurrentLocation: focusCurrentLocation),
 
+        if (widget.center != null && widget.radius != null)
+          CircleLayer(circles: [
+            CircleMarker(
+                point: widget.center!,
+                radius: widget.radius!,
+                color: Colors.grey.withOpacity(0.5),
+                useRadiusInMeter: true)
+          ]),
         // NearbyPlaces Marker
         NearbyPlacesLayer(
           places: nearbyPlaces,
