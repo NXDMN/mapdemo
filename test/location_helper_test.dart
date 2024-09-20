@@ -1,8 +1,8 @@
 import 'package:flutter/services.dart';
-import 'package:flutter_compass/flutter_compass.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:mapdemo/location_helper.dart';
+import 'package:mapdemo/native/flutter_compass.dart';
 
 final testPosition = Position(
   longitude: 100.0,
@@ -25,8 +25,7 @@ void main() {
         MethodChannel('flutter.baseflow.com/geolocator');
     const EventChannel geolocatorUpdatesChannel =
         EventChannel('flutter.baseflow.com/geolocator_updates');
-    const EventChannel compassChannel =
-        EventChannel('hemanthraj/flutter_compass');
+    const EventChannel compassChannel = EventChannel('flutter_compass');
 
     Future locationHandler(MethodCall methodCall) async {
       // whenever `getCurrentPosition` method is called we want to return a testPosition

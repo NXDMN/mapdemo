@@ -44,8 +44,6 @@ dependencies:
   flutter_map: ^7.0.2
   # for LatLng used by FlutterMap
   latlong2: ^0.9.1
-  # for heading
-  flutter_compass: ^0.8.0
 
 dev_dependencies:
   flutter_test:

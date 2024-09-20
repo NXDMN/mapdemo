@@ -2,13 +2,13 @@ import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
-import 'package:flutter_compass/flutter_compass.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 
 import 'package:mapdemo/extensions.dart';
 import 'package:mapdemo/location_helper.dart';
+import 'package:mapdemo/native/flutter_compass.dart';
 
 // Reference: https://github.com/tlserver/flutter_map_location_marker/tree/main
 

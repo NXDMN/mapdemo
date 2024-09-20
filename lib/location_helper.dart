@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'package:flutter_compass/flutter_compass.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:mapdemo/native/flutter_compass.dart';
 
 class LocationHelper {
   static Future<bool> checkPermission() async {
